@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-hot-toast";
 
 const PetitionList = () => {
   const [petitions, setPetitions] = useState([]);
@@ -27,6 +28,7 @@ const PetitionList = () => {
       setPetitions(sorted);
     } catch (err) {
       console.error(err);
+      toast.error("Error fetching petitions");
     }
   };
 
@@ -45,10 +47,11 @@ const PetitionList = () => {
       );
       setTitle("");
       setDescription("");
+      toast.success("Petition created successfully");
       fetchPetitions();
     } catch (err) {
       console.error(err);
-      alert(err.response?.data.error || "Error creating petition");
+      toast.error(err.response?.data.error || "Error creating petition");
     }
   };
 
@@ -61,12 +64,14 @@ const PetitionList = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (res.data.reached40) {
-        alert("Petition reached 40 votes!");
+        toast("Petition reached 40 votes!");
+      } else {
+        toast.success("Vote recorded!");
       }
       fetchPetitions();
     } catch (err) {
       console.error(err);
-      alert(err.response?.data.error || "Error while voting");
+      toast.error(err.response?.data.error || "Error while voting");
     }
   };
 
@@ -84,7 +89,7 @@ const PetitionList = () => {
         setVotersMap((prev) => ({ ...prev, [petitionId]: res.data.voters }));
       } catch (err) {
         console.error(err);
-        alert("Error fetching voters");
+        toast.error("Error fetching voters");
       }
     }
   };
@@ -133,10 +138,11 @@ const PetitionList = () => {
         ...prev,
         [petitionId]: { ...prev[petitionId], isEditing: false },
       }));
+      toast.success("Petition updated successfully");
       fetchPetitions();
     } catch (err) {
       console.error(err);
-      alert(err.response?.data.error || "Error updating petition");
+      toast.error(err.response?.data.error || "Error updating petition");
     }
   };
 
@@ -159,11 +165,11 @@ const PetitionList = () => {
         <form
           onSubmit={handleSubmit}
           className="form-container"
-          style={{ width: "100%", maxWidth: "500px" }}
+          style={{ width: "100%", maxWidth: "755px" }}
         >
           <input
             type="text"
-            placeholder="Title"
+            placeholder="Subject"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             className="input"
@@ -232,7 +238,6 @@ const PetitionList = () => {
               <p className="petition-meta">
                 Created: {new Date(petition.createdAt).toLocaleString()}
               </p>
-              {/* Show teacher review if it exists and if the current role is teacher */}
               {role === "teacher" && petition.teacherReview && (
                 <p className="petition-meta">
                   Reviewed by: {petition.teacherReview}

@@ -2,18 +2,18 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-hot-toast";
 
 const TeachersDashboard = () => {
   const [petitions, setPetitions] = useState([]);
   const [votersMap, setVotersMap] = useState({});
   // reviewMap handles teacher review mode: { [petitionId]: { isReviewing, teacherReview } }
   const [reviewMap, setReviewMap] = useState({});
-  const [notification, setNotification] = useState(null);
   const navigate = useNavigate();
 
   // Teacher's expertise stored in localStorage (e.g., "Math", "Science")
   const teacherExpertise = localStorage.getItem("expertise");
-  // Teacher's username stored on login (optional, used to prepopulate review)
+  // Teacher's username stored on login (used to prepopulate review)
   const teacherUsername = localStorage.getItem("username");
   console.log("Teacher expertise:", teacherExpertise);
 
@@ -46,6 +46,7 @@ const TeachersDashboard = () => {
       setPetitions(filtered);
     } catch (err) {
       console.error(err);
+      toast.error("Error fetching petitions");
     }
   };
 
@@ -62,7 +63,7 @@ const TeachersDashboard = () => {
         setVotersMap((prev) => ({ ...prev, [petitionId]: res.data.voters }));
       } catch (err) {
         console.error(err);
-        alert("Error fetching voters");
+        toast.error("Error fetching voters");
       }
     }
   };
@@ -100,7 +101,7 @@ const TeachersDashboard = () => {
     try {
       const token = localStorage.getItem("token");
       const { teacherReview } = reviewMap[petitionId];
-      // Update petition with teacherReview field.
+      // Update petition with teacherReview field. Your backend must support this.
       await axios.put(
         `http://localhost:5000/api/petitions/${petitionId}`,
         { teacherReview },
@@ -110,12 +111,11 @@ const TeachersDashboard = () => {
         ...prev,
         [petitionId]: { ...prev[petitionId], isReviewing: false },
       }));
-      setNotification("Petition reviewed successfully");
-      setTimeout(() => setNotification(null), 3000);
+      toast.success("Petition reviewed successfully");
       fetchPetitions();
     } catch (err) {
       console.error(err);
-      alert(err.response?.data.error || "Error updating review");
+      toast.error(err.response?.data.error || "Error updating review");
     }
   };
 
@@ -133,7 +133,6 @@ const TeachersDashboard = () => {
           Logout
         </button>
       </div>
-      {notification && <div className="notification">{notification}</div>}
       {petitions.length === 0 ? (
         <p>No petitions found for your expertise.</p>
       ) : (
