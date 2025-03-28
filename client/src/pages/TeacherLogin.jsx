@@ -1,50 +1,46 @@
-// src/pages/Signup.jsx
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 
-const Signup = () => {
+const TeacherLogin = () => {
   const [email, setEmail] = useState("");
-  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [idNumber, setIdNumber] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post("http://localhost:5000/api/auth/signup", {
+      const res = await axios.post("http://localhost:5000/api/auth/login", {
         email,
-        username,
         password,
-        idNumber,
-        role: "student",
       });
-      navigate("/login");
+      // Check that the user has teacher admin role
+      if (res.data.role === "teacherAdmin") {
+        localStorage.setItem("token", res.data.token);
+        localStorage.setItem("role", res.data.role);
+        localStorage.setItem("userId", res.data.userId);
+        navigate("/teacher");
+      } else {
+        alert("Not authorized as teacher");
+      }
     } catch (err) {
       console.error(err);
-      alert(err.response?.data.error || "Error during signup");
+      alert(err.response?.data.error || "Error during teacher login");
     }
   };
 
   return (
     <div className="auth-page">
       <form onSubmit={handleSubmit} className="form-container">
-        <h2 style={{ textAlign: "center", marginBottom: "20px" }}>Signup</h2>
+        <h2 style={{ textAlign: "center", marginBottom: "20px" }}>
+          Teacher Login
+        </h2>
         <input
           type="email"
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="input"
-          required
-        />
-        <input
-          type="text"
-          placeholder="Username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
           className="input"
           required
         />
@@ -59,35 +55,30 @@ const Signup = () => {
         <div className="checkbox-container">
           <input
             type="checkbox"
-            id="togglePasswordSignup"
+            id="togglePasswordTeacher"
             checked={showPassword}
             onChange={() => setShowPassword(!showPassword)}
           />
-          <label htmlFor="togglePasswordSignup">Show Password</label>
+          <label htmlFor="togglePasswordTeacher" style={{ marginLeft: "5px" }}>
+            Show Password
+          </label>
         </div>
-        <input
-          type="text"
-          placeholder="ID Number"
-          value={idNumber}
-          onChange={(e) => setIdNumber(e.target.value)}
-          className="input"
-          required
-        />
         <button type="submit" className="form-button">
-          Signup
+          Login as Teacher
         </button>
         <p style={{ textAlign: "center", marginTop: "15px" }}>
-          Already have an account?{" "}
+          Don't have an account?{" "}
           <Link
-            to="/login"
+            to="/signup"
             style={{ color: "#0275d8", textDecoration: "underline" }}
           >
-            Student Login
+            Signup
           </Link>
         </p>
+        a
       </form>
     </div>
   );
 };
 
-export default Signup;
+export default TeacherLogin;

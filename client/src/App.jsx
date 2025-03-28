@@ -1,12 +1,13 @@
-// src/App.jsx
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import PetitionList from "./pages/PetitionList";
 import AdminDashboard from "./pages/AdminDashboard";
-import "./index.css"; // Import the custom CSS
-
+import AdminLogin from "./pages/AdminLogin";
+import TeacherLogin from "./pages/TeacherLogin";
+import TeacherDashboard from "./pages/TeacherDashboard"; // if you have one
+import "./index.css";
 function App() {
   return (
     <Router>
@@ -14,7 +15,10 @@ function App() {
         <Route path="/" element={<PetitionList />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/teacher/login" element={<TeacherLogin />} />
         <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/teacher" element={<TeacherDashboard />} />
       </Routes>
     </Router>
   );

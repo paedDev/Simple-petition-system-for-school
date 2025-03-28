@@ -1,4 +1,3 @@
-// src/pages/Login.jsx
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
@@ -18,9 +17,14 @@ const Login = () => {
       });
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("role", res.data.role);
+      localStorage.setItem("userId", res.data.userId);
+      // Navigate based on role:
       if (res.data.role === "admin") {
         navigate("/admin");
+      } else if (res.data.role === "teacherAdmin") {
+        navigate("/teacher");
       } else {
+        // default to student dashboard or homepage
         navigate("/");
       }
     } catch (err) {
@@ -32,7 +36,9 @@ const Login = () => {
   return (
     <div className="auth-page">
       <form onSubmit={handleSubmit} className="form-container">
-        <h2 style={{ textAlign: "center", marginBottom: "20px" }}>Login</h2>
+        <h2 style={{ textAlign: "center", marginBottom: "20px" }}>
+          Student Login
+        </h2>
         <input
           type="email"
           placeholder="Email"
@@ -49,7 +55,7 @@ const Login = () => {
           className="input"
           required
         />
-        <div style={{ marginBottom: "10px" }}>
+        <div className="checkbox-container">
           <input
             type="checkbox"
             id="togglePasswordLogin"
@@ -70,6 +76,24 @@ const Login = () => {
             style={{ color: "#0275d8", textDecoration: "underline" }}
           >
             Signup
+          </Link>
+        </p>
+        <p style={{ textAlign: "center", marginTop: "10px" }}>
+          Are you an admin?{" "}
+          <Link
+            to="/admin/login"
+            style={{ color: "#0275d8", textDecoration: "underline" }}
+          >
+            Admin Login
+          </Link>
+        </p>
+        <p style={{ textAlign: "center", marginTop: "10px" }}>
+          Are you a teacher?{" "}
+          <Link
+            to="/teacher/login"
+            style={{ color: "#0275d8", textDecoration: "underline" }}
+          >
+            Teacher Login
           </Link>
         </p>
       </form>

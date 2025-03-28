@@ -50,26 +50,22 @@ router.post("/:id/vote", auth, async (req, res) => {
     if (!petition) {
       return res.status(404).json({ error: "Petition not found" });
     }
-    // Prevent voting if the petition is closed
     if (petition.status === "closed") {
       return res
         .status(400)
         .json({ error: "This petition is closed. Voting is not allowed." });
     }
-    // Stop voting if 40 votes have already been recorded
     if (petition.votes.length >= 40) {
       return res
         .status(400)
         .json({ error: "Vote limit reached. No more votes are allowed." });
     }
-    // Check if the student has already voted
     if (petition.votes.includes(req.user.id)) {
       return res.status(400).json({ error: "You already voted" });
     }
 
     petition.votes.push(req.user.id);
 
-    // Optionally, set the notified flag if exactly 40 votes are reached
     let reached40 = false;
     if (petition.votes.length === 40 && !petition.notified) {
       petition.notified = true;
@@ -88,8 +84,7 @@ router.post("/:id/vote", auth, async (req, res) => {
   }
 });
 
-// Update petition (students can edit their own title and description; admins can update status)
-// Update petition (students can edit their own title and description; admins can update status)
+// Update petition (students can edit title/description if they are the creator; admins can update status)
 router.put("/:id", auth, async (req, res) => {
   try {
     const petition = await Petition.findById(req.params.id);
@@ -98,7 +93,6 @@ router.put("/:id", auth, async (req, res) => {
     }
 
     if (req.user.role === "student") {
-      // Allow student update only if the student is the creator
       if (petition.createdBy.toString() !== req.user.id) {
         return res
           .status(403)
@@ -108,11 +102,9 @@ router.put("/:id", auth, async (req, res) => {
       if (title) petition.title = title;
       if (description) petition.description = description;
     } else if (req.user.role === "admin") {
-      // Admin can update status (or other allowed fields)
       const { status } = req.body;
       if (status) petition.status = status;
     }
-
     await petition.save();
     res.json(petition);
   } catch (err) {
