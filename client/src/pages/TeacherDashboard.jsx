@@ -6,14 +6,16 @@ import { useNavigate } from "react-router-dom";
 const TeachersDashboard = () => {
   const [petitions, setPetitions] = useState([]);
   const [votersMap, setVotersMap] = useState({});
-  const [reviewMap, setReviewMap] = useState({}); // { [petitionId]: { isReviewing, teacherReview } }
+  // reviewMap handles teacher review mode: { [petitionId]: { isReviewing, teacherReview } }
+  const [reviewMap, setReviewMap] = useState({});
   const [notification, setNotification] = useState(null);
   const navigate = useNavigate();
 
   // Teacher's expertise stored in localStorage (e.g., "Math", "Science")
   const teacherExpertise = localStorage.getItem("expertise");
-  // Optionally, teacher's username stored on login:
+  // Teacher's username stored on login (optional, used to prepopulate review)
   const teacherUsername = localStorage.getItem("username");
+  console.log("Teacher expertise:", teacherExpertise);
 
   useEffect(() => {
     fetchPetitions();
@@ -29,10 +31,18 @@ const TeachersDashboard = () => {
       const res = await axios.get("http://localhost:5000/api/petitions", {
         headers: { Authorization: `Bearer ${token}` },
       });
+      console.log("Fetched petitions:", res.data);
       // Filter petitions based on teacher's expertise (assuming petition.subject exists)
-      const filtered = res.data.filter(
-        (petition) => petition.subject === teacherExpertise
-      );
+      let filtered = res.data;
+      if (teacherExpertise) {
+        filtered = res.data.filter((petition) => {
+          return (
+            petition.subject &&
+            petition.subject.toLowerCase() === teacherExpertise.toLowerCase()
+          );
+        });
+      }
+      console.log("Filtered petitions:", filtered);
       setPetitions(filtered);
     } catch (err) {
       console.error(err);
@@ -57,7 +67,7 @@ const TeachersDashboard = () => {
     }
   };
 
-  // Toggle review mode for a petition
+  // Toggle review mode for a petition. Prepopulate with teacher's username or existing review.
   const handleToggleReview = (petition) => {
     setReviewMap((prev) => {
       if (prev[petition._id] && prev[petition._id].isReviewing) {
@@ -70,8 +80,7 @@ const TeachersDashboard = () => {
           ...prev,
           [petition._id]: {
             isReviewing: true,
-            // Pre-populate with teacher's name if available; otherwise empty string
-            teacherReview: teacherUsername || "",
+            teacherReview: petition.teacherReview || teacherUsername || "",
           },
         };
       }
@@ -91,8 +100,7 @@ const TeachersDashboard = () => {
     try {
       const token = localStorage.getItem("token");
       const { teacherReview } = reviewMap[petitionId];
-      // PUT request to update petition with teacherReview field.
-      // Make sure your backend allows teacher review updates.
+      // Update petition with teacherReview field.
       await axios.put(
         `http://localhost:5000/api/petitions/${petitionId}`,
         { teacherReview },
@@ -143,6 +151,12 @@ const TeachersDashboard = () => {
             <p className="petition-meta">
               Created: {new Date(petition.createdAt).toLocaleString()}
             </p>
+            {/* Display teacher review if available */}
+            {petition.teacherReview && (
+              <p className="petition-meta">
+                Reviewed by: {petition.teacherReview}
+              </p>
+            )}
             <div className="petition-actions">
               <button
                 className="button"
@@ -150,49 +164,40 @@ const TeachersDashboard = () => {
               >
                 {votersMap[petition._id] ? "Hide Voters" : "Show Voters"}
               </button>
-              {/* If teacher has not yet reviewed this petition, show the Review button */}
-              {!petition.teacherReview && (
+              {/* Always show a button for review/edit */}
+              <button
+                className="button"
+                onClick={() => handleToggleReview(petition)}
+              >
+                {petition.teacherReview ? "Edit Review" : "Review"}
+              </button>
+            </div>
+            {/* If in review mode, display input and save/cancel options */}
+            {reviewMap[petition._id] && reviewMap[petition._id].isReviewing && (
+              <div className="review-container">
+                <input
+                  type="text"
+                  value={reviewMap[petition._id].teacherReview}
+                  onChange={(e) =>
+                    handleReviewChange(petition._id, e.target.value)
+                  }
+                  className="input"
+                  placeholder="Enter your review"
+                />
+                <button
+                  className="button btn-approve"
+                  onClick={() => handleReviewSubmit(petition._id)}
+                >
+                  Save Review
+                </button>
                 <button
                   className="button"
                   onClick={() => handleToggleReview(petition)}
                 >
-                  Review
+                  Cancel
                 </button>
-              )}
-              {/* If in review mode, show input and Save/Cancel buttons */}
-              {reviewMap[petition._id] &&
-                reviewMap[petition._id].isReviewing && (
-                  <div className="review-container">
-                    <input
-                      type="text"
-                      value={reviewMap[petition._id].teacherReview}
-                      onChange={(e) =>
-                        handleReviewChange(petition._id, e.target.value)
-                      }
-                      className="input"
-                      placeholder="Enter your review (e.g., your name)"
-                    />
-                    <button
-                      className="button btn-approve"
-                      onClick={() => handleReviewSubmit(petition._id)}
-                    >
-                      Save Review
-                    </button>
-                    <button
-                      className="button"
-                      onClick={() => handleToggleReview(petition)}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                )}
-              {/* If petition already has a review, display it */}
-              {petition.teacherReview && (
-                <p className="petition-meta">
-                  Reviewed by: {petition.teacherReview}
-                </p>
-              )}
-            </div>
+              </div>
+            )}
             {votersMap[petition._id] && (
               <div className="voters-list">
                 <h3>Voters:</h3>

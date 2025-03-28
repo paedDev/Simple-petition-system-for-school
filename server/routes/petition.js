@@ -11,10 +11,11 @@ router.post("/", auth, async (req, res) => {
       .json({ error: "Only students can create petitions" });
   }
 
-  const { title, description } = req.body;
+  const { title, description, subject } = req.body;
   const petition = new Petition({
     title,
     description,
+    subject,
     createdBy: req.user.id,
     status: "open",
   });
@@ -84,7 +85,10 @@ router.post("/:id/vote", auth, async (req, res) => {
   }
 });
 
-// Update petition (students can edit title/description if they are the creator; admins can update status)
+// Update petition
+// - Students can update title/description if they are the creator.
+// - Teachers or teacherAdmins can update teacherReview.
+// - Admins can update status.
 router.put("/:id", auth, async (req, res) => {
   try {
     const petition = await Petition.findById(req.params.id);
@@ -93,18 +97,29 @@ router.put("/:id", auth, async (req, res) => {
     }
 
     if (req.user.role === "student") {
+      // Only the creator can update title/description
       if (petition.createdBy.toString() !== req.user.id) {
         return res
           .status(403)
           .json({ error: "Not authorized to update this petition" });
       }
-      const { title, description } = req.body;
+      const { title, description, subject } = req.body;
       if (title) petition.title = title;
       if (description) petition.description = description;
+      if (subject) petition.subject = subject;
+    } else if (
+      req.user.role === "teacher" ||
+      req.user.role === "teacherAdmin"
+    ) {
+      // Teacher or teacherAdmin updates the teacherReview field
+      const { teacherReview } = req.body;
+      if (teacherReview) petition.teacherReview = teacherReview;
     } else if (req.user.role === "admin") {
+      // Admin updates the status
       const { status } = req.body;
       if (status) petition.status = status;
     }
+
     await petition.save();
     res.json(petition);
   } catch (err) {

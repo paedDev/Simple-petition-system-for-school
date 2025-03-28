@@ -232,6 +232,12 @@ const PetitionList = () => {
               <p className="petition-meta">
                 Created: {new Date(petition.createdAt).toLocaleString()}
               </p>
+              {/* Show teacher review if it exists and if the current role is teacher */}
+              {role === "teacher" && petition.teacherReview && (
+                <p className="petition-meta">
+                  Reviewed by: {petition.teacherReview}
+                </p>
+              )}
               {role === "student" && (
                 <div className="petition-actions">
                   {petition.status === "closed" ? (

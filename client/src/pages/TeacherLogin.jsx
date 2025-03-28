@@ -75,7 +75,6 @@ const TeacherLogin = () => {
             Signup
           </Link>
         </p>
-        a
       </form>
     </div>
   );

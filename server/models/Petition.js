@@ -4,6 +4,8 @@ const PetitionSchema = new mongoose.Schema(
   {
     title: { type: String, required: true },
     description: { type: String, required: true },
+    subject: { type: String }, // Optional: used for matching teacher expertise
+    teacherReview: { type: String }, // New field for teacher review
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -17,7 +19,7 @@ const PetitionSchema = new mongoose.Schema(
     votes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     notified: { type: Boolean, default: false },
   },
-  { timestamps: true }
-); // <-- This enables createdAt and updatedAt
+  { timestamps: true } // Enables createdAt and updatedAt fields
+);
 
 module.exports = mongoose.model("Petition", PetitionSchema);

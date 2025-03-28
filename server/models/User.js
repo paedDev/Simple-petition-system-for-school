@@ -7,7 +7,7 @@ const UserSchema = new mongoose.Schema({
   idNumber: { type: String, unique: true, required: true },
   role: {
     type: String,
-    enum: ["student", "admin", "teacherAdmin"],
+    enum: ["student", "admin", "teacher", "teacherAdmin"],
     default: "student",
   },
 });

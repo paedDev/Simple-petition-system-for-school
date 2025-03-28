@@ -5,7 +5,6 @@ import { useNavigate } from "react-router-dom";
 
 const AdminDashboard = () => {
   const [petitions, setPetitions] = useState([]);
-  // Map petition ID to its voters list; null means hidden
   const [votersMap, setVotersMap] = useState({});
   const [notification, setNotification] = useState(null);
   const navigate = useNavigate();
@@ -111,6 +110,12 @@ const AdminDashboard = () => {
           <p className="petition-meta">
             Created: {new Date(petition.createdAt).toLocaleString()}
           </p>
+          {/* Display teacher review if available */}
+          {petition.teacherReview && (
+            <p className="petition-meta">
+              Teacher Review: {petition.teacherReview}
+            </p>
+          )}
           <div className="petition-actions">
             <button
               className="button btn-approve"
