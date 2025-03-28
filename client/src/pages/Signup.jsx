@@ -1,13 +1,14 @@
 // src/pages/Signup.jsx
 import React, { useState } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
 const Signup = () => {
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [idNumber, setIdNumber] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -48,13 +49,24 @@ const Signup = () => {
           required
         />
         <input
-          type="password"
+          type={showPassword ? "text" : "password"}
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           className="input"
           required
         />
+        <div style={{ marginBottom: "10px" }}>
+          <input
+            type="checkbox"
+            id="togglePasswordSignup"
+            checked={showPassword}
+            onChange={() => setShowPassword(!showPassword)}
+          />
+          <label htmlFor="togglePasswordSignup" style={{ marginLeft: "5px" }}>
+            Show Password
+          </label>
+        </div>
         <input
           type="text"
           placeholder="ID Number"
@@ -66,6 +78,15 @@ const Signup = () => {
         <button type="submit" className="form-button">
           Signup
         </button>
+        <p style={{ textAlign: "center", marginTop: "15px" }}>
+          Already have an account?{" "}
+          <Link
+            to="/login"
+            style={{ color: "#0275d8", textDecoration: "underline" }}
+          >
+            Back to Login
+          </Link>
+        </p>
       </form>
     </div>
   );

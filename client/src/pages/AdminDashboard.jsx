@@ -5,31 +5,51 @@ import { useNavigate } from "react-router-dom";
 
 const AdminDashboard = () => {
   const [petitions, setPetitions] = useState([]);
+  // Map petition ID to its voters list; null means hidden
+  const [votersMap, setVotersMap] = useState({});
   const [notification, setNotification] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchData = async () => {
+    fetchPetitions();
+  }, []);
+
+  const fetchPetitions = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        navigate("/login");
+        return;
+      }
+      const res = await axios.get("http://localhost:5000/api/petitions", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      // Sort petitions by votes in descending order.
+      const sorted = res.data.sort(
+        (a, b) => (b.votes?.length || 0) - (a.votes?.length || 0)
+      );
+      setPetitions(sorted);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleToggleVoters = async (petitionId) => {
+    if (votersMap[petitionId]) {
+      setVotersMap((prev) => ({ ...prev, [petitionId]: null }));
+    } else {
       try {
         const token = localStorage.getItem("token");
-        if (!token) {
-          navigate("/login");
-          return;
-        }
-        const res = await axios.get("http://localhost:5000/api/petitions", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setPetitions(res.data);
+        const res = await axios.get(
+          `http://localhost:5000/api/petitions/${petitionId}/voters`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        setVotersMap((prev) => ({ ...prev, [petitionId]: res.data.voters }));
       } catch (err) {
         console.error(err);
+        alert("Error fetching voters");
       }
-    };
-    fetchData();
-  }, [navigate]);
-
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    navigate("/login");
+    }
   };
 
   const handleStatusChange = async (id, newStatus) => {
@@ -64,10 +84,10 @@ const AdminDashboard = () => {
     }
   };
 
-  // Example: petitions with votes.length >= 40 and notified flag true
-  const notifiedPetitions = petitions.filter(
-    (p) => p.votes?.length >= 40 && p.notified
-  );
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    navigate("/login");
+  };
 
   return (
     <div className="container">
@@ -79,11 +99,6 @@ const AdminDashboard = () => {
       </div>
 
       {notification && <div className="notification">{notification}</div>}
-      {notifiedPetitions.length > 0 && (
-        <div className="alert">
-          {notifiedPetitions.length} petition(s) have reached 40 votes!
-        </div>
-      )}
       {petitions.map((petition) => (
         <div key={petition._id} className="petition-card">
           <h2 className="petition-title">{petition.title}</h2>
@@ -92,6 +107,9 @@ const AdminDashboard = () => {
           <p className="petition-meta">Votes: {petition.votes?.length || 0}</p>
           <p className="petition-meta">
             By: {petition.createdBy?.username || "Unknown"}
+          </p>
+          <p className="petition-meta">
+            Created: {new Date(petition.createdAt).toLocaleString()}
           </p>
           <div className="petition-actions">
             <button
@@ -127,7 +145,25 @@ const AdminDashboard = () => {
             >
               Delete
             </button>
+            <button
+              className="button"
+              onClick={() => handleToggleVoters(petition._id)}
+            >
+              {votersMap[petition._id] ? "Hide Voters" : "Show Voters"}
+            </button>
           </div>
+          {votersMap[petition._id] && (
+            <div className="voters-list">
+              <h3>Voters:</h3>
+              <ul>
+                {votersMap[petition._id].map((voter) => (
+                  <li key={voter._id}>
+                    {voter.username} ({voter.email})
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       ))}
     </div>

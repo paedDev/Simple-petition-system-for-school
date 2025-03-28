@@ -56,14 +56,22 @@ router.post("/:id/vote", auth, async (req, res) => {
         .status(400)
         .json({ error: "This petition is closed. Voting is not allowed." });
     }
+    // Stop voting if 40 votes have already been recorded
+    if (petition.votes.length >= 40) {
+      return res
+        .status(400)
+        .json({ error: "Vote limit reached. No more votes are allowed." });
+    }
     // Check if the student has already voted
     if (petition.votes.includes(req.user.id)) {
       return res.status(400).json({ error: "You already voted" });
     }
+
     petition.votes.push(req.user.id);
 
+    // Optionally, set the notified flag if exactly 40 votes are reached
     let reached40 = false;
-    if (petition.votes.length >= 40 && !petition.notified) {
+    if (petition.votes.length === 40 && !petition.notified) {
       petition.notified = true;
       reached40 = true;
     }
@@ -80,38 +88,65 @@ router.post("/:id/vote", auth, async (req, res) => {
   }
 });
 
-// Update petition status (admin only)
+// Update petition (students can edit their own title and description; admins can update status)
+// Update petition (students can edit their own title and description; admins can update status)
 router.put("/:id", auth, async (req, res) => {
-  if (!req.user || req.user.role !== "admin") {
-    return res.status(403).json({ error: "Only admins can update petitions" });
-  }
-
-  const { status } = req.body;
   try {
-    const petition = await Petition.findByIdAndUpdate(
-      req.params.id,
-      { status },
-      { new: true }
-    );
+    const petition = await Petition.findById(req.params.id);
     if (!petition) {
       return res.status(404).json({ error: "Petition not found" });
     }
+
+    if (req.user.role === "student") {
+      // Allow student update only if the student is the creator
+      if (petition.createdBy.toString() !== req.user.id) {
+        return res
+          .status(403)
+          .json({ error: "Not authorized to update this petition" });
+      }
+      const { title, description } = req.body;
+      if (title) petition.title = title;
+      if (description) petition.description = description;
+    } else if (req.user.role === "admin") {
+      // Admin can update status (or other allowed fields)
+      const { status } = req.body;
+      if (status) petition.status = status;
+    }
+
+    await petition.save();
     res.json(petition);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
+
+// Delete petition (admin only)
 router.delete("/:id", auth, async (req, res) => {
   if (!req.user || req.user.role !== "admin") {
     return res.status(403).json({ error: "Only admins can delete petitions" });
   }
-
   try {
     const petition = await Petition.findByIdAndDelete(req.params.id);
     if (!petition) {
       return res.status(404).json({ error: "Petition not found" });
     }
     res.json({ message: "Petition deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get voters for a petition
+router.get("/:id/voters", auth, async (req, res) => {
+  try {
+    const petition = await Petition.findById(req.params.id).populate(
+      "votes",
+      "username email idNumber"
+    );
+    if (!petition) {
+      return res.status(404).json({ error: "Petition not found" });
+    }
+    res.json({ voters: petition.votes });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

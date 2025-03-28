@@ -6,6 +6,7 @@ import { useNavigate, Link } from "react-router-dom";
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -41,13 +42,24 @@ const Login = () => {
           required
         />
         <input
-          type="password"
+          type={showPassword ? "text" : "password"}
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           className="input"
           required
         />
+        <div style={{ marginBottom: "10px" }}>
+          <input
+            type="checkbox"
+            id="togglePasswordLogin"
+            checked={showPassword}
+            onChange={() => setShowPassword(!showPassword)}
+          />
+          <label htmlFor="togglePasswordLogin" style={{ marginLeft: "5px" }}>
+            Show Password
+          </label>
+        </div>
         <button type="submit" className="form-button">
           Login
         </button>
