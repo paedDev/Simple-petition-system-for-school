@@ -7,6 +7,11 @@ import { toast } from "react-hot-toast";
 const AdminDashboard = () => {
   const [petitions, setPetitions] = useState([]);
   const [votersMap, setVotersMap] = useState({});
+  // actionMap manages inline admin action mode for a petition:
+  // { [petitionId]: { isActioning: true, newStatus, adminComment } }
+  const [actionMap, setActionMap] = useState({});
+  // For search functionality (by title)
+  const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -23,8 +28,10 @@ const AdminDashboard = () => {
       const res = await axios.get("http://localhost:5000/api/petitions", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      // Filter petitions to only show those that have been reviewed by a teacher
-      const reviewed = res.data.filter((petition) => petition.teacherReview);
+      // Filter petitions to show only those that have been reviewed by a teacher (either teacherReview or prerequisiteComment exists)
+      const reviewed = res.data.filter(
+        (petition) => petition.teacherReview || petition.prerequisiteComment
+      );
       // Sort reviewed petitions by votes in descending order.
       const sorted = reviewed.sort(
         (a, b) => (b.votes?.length || 0) - (a.votes?.length || 0)
@@ -54,42 +61,77 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleStatusChange = async (id, newStatus) => {
+  // Toggle action mode for a petition with the given target status.
+  // For "approved", prepopulate the reason with a default message.
+  const toggleActionMode = (petitionId, targetStatus) => {
+    setActionMap((prev) => {
+      if (prev[petitionId] && prev[petitionId].isActioning) {
+        // Cancel action mode for this petition.
+        const newState = { ...prev };
+        delete newState[petitionId];
+        return newState;
+      } else {
+        return {
+          ...prev,
+          [petitionId]: {
+            isActioning: true,
+            newStatus: targetStatus,
+            adminComment:
+              targetStatus === "approved" ? "You can enroll it now" : "",
+          },
+        };
+      }
+    });
+  };
+
+  // Handle changes in the admin comment input.
+  const handleActionCommentChange = (petitionId, value) => {
+    setActionMap((prev) => ({
+      ...prev,
+      [petitionId]: { ...prev[petitionId], adminComment: value },
+    }));
+  };
+
+  // Confirm and submit the admin action.
+  const handleConfirmAction = async (petitionId) => {
     try {
       const token = localStorage.getItem("token");
+      const { newStatus, adminComment } = actionMap[petitionId];
+      // Update petition with new status and adminComment.
       await axios.put(
-        `http://localhost:5000/api/petitions/${id}`,
-        { status: newStatus },
+        `http://localhost:5000/api/petitions/${petitionId}`,
+        { status: newStatus, adminComment },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setPetitions(
-        petitions.map((p) => (p._id === id ? { ...p, status: newStatus } : p))
+      // Update local state.
+      setPetitions((prev) =>
+        prev.map((p) =>
+          p._id === petitionId ? { ...p, status: newStatus, adminComment } : p
+        )
       );
-      toast.success(`Petition ${id} updated to ${newStatus}`);
+      toast.success(`Petition ${petitionId} updated to ${newStatus}`);
+      // Remove action mode for this petition.
+      setActionMap((prev) => {
+        const newState = { ...prev };
+        delete newState[petitionId];
+        return newState;
+      });
     } catch (err) {
       console.error(err);
       toast.error("Error updating status");
     }
   };
 
-  const handleDelete = async (id) => {
-    try {
-      const token = localStorage.getItem("token");
-      await axios.delete(`http://localhost:5000/api/petitions/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setPetitions(petitions.filter((p) => p._id !== id));
-      toast.success(`Petition ${id} deleted successfully`);
-    } catch (err) {
-      console.error(err);
-      toast.error("Error deleting petition");
-    }
-  };
-
   const handleLogout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("role");
     navigate("/login");
   };
+
+  // Filter petitions by title based on the search query (case-insensitive)
+  const filteredPetitions = petitions.filter((petition) =>
+    petition.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div className="container">
@@ -100,10 +142,25 @@ const AdminDashboard = () => {
         </button>
       </div>
 
-      {petitions.length === 0 ? (
+      {/* Search Input */}
+      <div style={{ margin: "20px 0", textAlign: "center", display: "flex", justifyContent: "space-around", width: "50%", margin: "auto", marginBottom: "5px" }}>
+        <div>
+          <p>Search the subject </p>
+        </div>
+        <input
+          type="text"
+          placeholder="Ex. CPENET"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="input"
+          style={{ width: "50%" }}
+        />
+      </div>
+
+      {filteredPetitions.length === 0 ? (
         <p>No reviewed petitions found.</p>
       ) : (
-        petitions.map((petition) => (
+        filteredPetitions.map((petition) => (
           <div key={petition._id} className="petition-card">
             <h2 className="petition-title">{petition.title}</h2>
             <p className="petition-description">{petition.description}</p>
@@ -117,43 +174,67 @@ const AdminDashboard = () => {
             <p className="petition-meta">
               Created: {new Date(petition.createdAt).toLocaleString()}
             </p>
-            {/* Display teacher review */}
+            {/* Render teacher review and comment if available */}
             {petition.teacherReview && (
               <p className="petition-meta">
                 Teacher Review: {petition.teacherReview}
               </p>
             )}
+            {petition.adminComment && (
+              <p className="petition-meta">
+                Reason: {petition.adminComment}
+              </p>
+            )}
             <div className="petition-actions">
               <button
                 className="button btn-approve"
-                onClick={() => handleStatusChange(petition._id, "approved")}
+                onClick={() => toggleActionMode(petition._id, "approved")}
               >
                 Approve
               </button>
               <button
                 className="button btn-deny"
-                onClick={() => handleStatusChange(petition._id, "denied")}
+                onClick={() => toggleActionMode(petition._id, "denied")}
               >
                 Deny
               </button>
-              {petition.status !== "closed" ? (
+              {petition.votes?.length >= 40 ? (
+                <button className="button btn-close" disabled>
+                  Already reached 40 votes
+                </button>
+              ) : petition.status !== "closed" ? (
                 <button
                   className="button btn-close"
-                  onClick={() => handleStatusChange(petition._id, "closed")}
+                  onClick={() => toggleActionMode(petition._id, "closed")}
                 >
                   Close Petition
                 </button>
               ) : (
                 <button
                   className="button btn-open"
-                  onClick={() => handleStatusChange(petition._id, "open")}
+                  onClick={() => toggleActionMode(petition._id, "open")}
                 >
                   Reopen Petition
                 </button>
               )}
               <button
                 className="button btn-delete"
-                onClick={() => handleDelete(petition._id)}
+                onClick={() => {
+                  axios
+                    .delete(`http://localhost:5000/api/petitions/${petition._id}`, {
+                      headers: {
+                        Authorization: `Bearer ${localStorage.getItem("token")}`,
+                      },
+                    })
+                    .then(() => {
+                      toast.success(`Petition ${petition._id} deleted successfully`);
+                      fetchPetitions();
+                    })
+                    .catch((err) => {
+                      console.error(err);
+                      toast.error("Error deleting petition");
+                    });
+                }}
               >
                 Delete
               </button>
@@ -164,13 +245,54 @@ const AdminDashboard = () => {
                 {votersMap[petition._id] ? "Hide Voters" : "Show Voters"}
               </button>
             </div>
+
+            {/* Inline admin action mode: input for admin comment */}
+            {actionMap[petition._id] && actionMap[petition._id].isActioning && (
+              <div className="action-container" style={{ marginTop: "10px" }}>
+                <input
+                  type="text"
+                  value={actionMap[petition._id].adminComment}
+                  onChange={(e) =>
+                    setActionMap((prev) => ({
+                      ...prev,
+                      [petition._id]: {
+                        ...prev[petition._id],
+                        adminComment: e.target.value,
+                      },
+                    }))
+                  }
+                  className="input"
+                  placeholder="Enter reason (e.g., Student lacks prerequisite)"
+                  style={{ width: "60%", marginRight: "10px" }}
+                />
+                <button
+                  className="button btn-approve"
+                  onClick={() => handleConfirmAction(petition._id)}
+                >
+                  Confirm
+                </button>
+                <button
+                  className="button"
+                  onClick={() =>
+                    setActionMap((prev) => {
+                      const newState = { ...prev };
+                      delete newState[petition._id];
+                      return newState;
+                    })
+                  }
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
+
             {votersMap[petition._id] && (
               <div className="voters-list">
                 <h3>Voters:</h3>
                 <ul>
                   {votersMap[petition._id].map((voter) => (
                     <li key={voter._id}>
-                      {voter.username} ({voter.email})
+                      ID: {voter.idNumber} - Email: {voter.email}
                     </li>
                   ))}
                 </ul>

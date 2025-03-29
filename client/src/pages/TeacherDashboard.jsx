@@ -7,15 +7,16 @@ import { toast } from "react-hot-toast";
 const TeachersDashboard = () => {
   const [petitions, setPetitions] = useState([]);
   const [votersMap, setVotersMap] = useState({});
-  // reviewMap handles teacher review mode: { [petitionId]: { isReviewing, teacherReview } }
+  // reviewMap manages teacher review mode & comment:
+  // { [petitionId]: { isReviewing, teacherReview, prerequisiteComment } }
   const [reviewMap, setReviewMap] = useState({});
+  // For search functionality
+  const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
 
-  // Teacher's expertise stored in localStorage (e.g., "Math", "Science")
+  // Teacher's expertise & username stored in localStorage
   const teacherExpertise = localStorage.getItem("expertise");
-  // Teacher's username stored on login (used to prepopulate review)
   const teacherUsername = localStorage.getItem("username");
-  console.log("Teacher expertise:", teacherExpertise);
 
   useEffect(() => {
     fetchPetitions();
@@ -31,8 +32,7 @@ const TeachersDashboard = () => {
       const res = await axios.get("http://localhost:5000/api/petitions", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      console.log("Fetched petitions:", res.data);
-      // Filter petitions based on teacher's expertise (assuming petition.subject exists)
+      // Filter petitions based on teacher's expertise (if provided)
       let filtered = res.data;
       if (teacherExpertise) {
         filtered = res.data.filter((petition) => {
@@ -42,7 +42,6 @@ const TeachersDashboard = () => {
           );
         });
       }
-      console.log("Filtered petitions:", filtered);
       setPetitions(filtered);
     } catch (err) {
       console.error(err);
@@ -68,7 +67,9 @@ const TeachersDashboard = () => {
     }
   };
 
-  // Toggle review mode for a petition. Prepopulate with teacher's username or existing review.
+  // Toggle review mode for a petition.
+  // Prepopulate teacherReview with the petition's teacherReview if available, or use teacherUsername.
+  // Also initialize prerequisiteComment if available.
   const handleToggleReview = (petition) => {
     setReviewMap((prev) => {
       if (prev[petition._id] && prev[petition._id].isReviewing) {
@@ -82,13 +83,14 @@ const TeachersDashboard = () => {
           [petition._id]: {
             isReviewing: true,
             teacherReview: petition.teacherReview || teacherUsername || "",
+            prerequisiteComment: petition.prerequisiteComment || "",
           },
         };
       }
     });
   };
 
-  // Handle changes in the review input
+  // Update teacherReview in reviewMap state.
   const handleReviewChange = (petitionId, value) => {
     setReviewMap((prev) => ({
       ...prev,
@@ -96,15 +98,22 @@ const TeachersDashboard = () => {
     }));
   };
 
-  // Submit the teacher review update
+  // Update prerequisiteComment in reviewMap state.
+  const handleCommentChange = (petitionId, value) => {
+    setReviewMap((prev) => ({
+      ...prev,
+      [petitionId]: { ...prev[petitionId], prerequisiteComment: value },
+    }));
+  };
+
+  // Submit the teacher review update (both teacherReview and prerequisiteComment).
   const handleReviewSubmit = async (petitionId) => {
     try {
       const token = localStorage.getItem("token");
-      const { teacherReview } = reviewMap[petitionId];
-      // Update petition with teacherReview field. Your backend must support this.
+      const { teacherReview, prerequisiteComment } = reviewMap[petitionId];
       await axios.put(
         `http://localhost:5000/api/petitions/${petitionId}`,
-        { teacherReview },
+        { teacherReview, prerequisiteComment },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setReviewMap((prev) => ({
@@ -125,6 +134,11 @@ const TeachersDashboard = () => {
     navigate("/login");
   };
 
+  // Filter petitions by title based on the search query (case-insensitive)
+  const filteredPetitions = petitions.filter((petition) =>
+    petition.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="container">
       <div className="header">
@@ -133,13 +147,32 @@ const TeachersDashboard = () => {
           Logout
         </button>
       </div>
-      {petitions.length === 0 ? (
+
+      {/* Search Input */}
+      <div style={{ margin: "20px 0", textAlign: "center", display: "flex", justifyContent: "space-around", width: "50%", margin: "auto", marginBottom: "5px" }}>
+        <div>
+          <p>Search the subject </p>
+        </div>
+        <input
+          type="text"
+          placeholder="Ex. CPENET"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="input"
+          style={{ width: "50%" }}
+        />
+      </div>
+
+      {filteredPetitions.length === 0 ? (
         <p>No petitions found for your expertise.</p>
       ) : (
-        petitions.map((petition) => (
+        filteredPetitions.map((petition) => (
           <div key={petition._id} className="petition-card">
             <h2 className="petition-title">{petition.title}</h2>
             <p className="petition-description">{petition.description}</p>
+            {petition.timeRange && (
+              <p className="petition-meta">Time: {petition.timeRange}</p>
+            )}
             <p className="petition-meta">Status: {petition.status}</p>
             <p className="petition-meta">
               Votes: {petition.votes?.length || 0}
@@ -150,10 +183,15 @@ const TeachersDashboard = () => {
             <p className="petition-meta">
               Created: {new Date(petition.createdAt).toLocaleString()}
             </p>
-            {/* Display teacher review if available */}
+            {/* Display teacher review and comment if available */}
             {petition.teacherReview && (
               <p className="petition-meta">
                 Reviewed by: {petition.teacherReview}
+              </p>
+            )}
+            {petition.prerequisiteComment && (
+              <p className="petition-meta">
+                Comment: {petition.prerequisiteComment}
               </p>
             )}
             <div className="petition-actions">
@@ -163,7 +201,6 @@ const TeachersDashboard = () => {
               >
                 {votersMap[petition._id] ? "Hide Voters" : "Show Voters"}
               </button>
-              {/* Always show a button for review/edit */}
               <button
                 className="button"
                 onClick={() => handleToggleReview(petition)}
@@ -171,7 +208,7 @@ const TeachersDashboard = () => {
                 {petition.teacherReview ? "Edit Review" : "Review"}
               </button>
             </div>
-            {/* If in review mode, display input and save/cancel options */}
+            {/* If in review mode, display inputs for teacherReview and prerequisiteComment */}
             {reviewMap[petition._id] && reviewMap[petition._id].isReviewing && (
               <div className="review-container">
                 <input
@@ -181,20 +218,32 @@ const TeachersDashboard = () => {
                     handleReviewChange(petition._id, e.target.value)
                   }
                   className="input"
-                  placeholder="Enter your review"
+                  placeholder="Enter your review (e.g., Sir Warren)"
                 />
-                <button
-                  className="button btn-approve"
-                  onClick={() => handleReviewSubmit(petition._id)}
-                >
-                  Save Review
-                </button>
-                <button
-                  className="button"
-                  onClick={() => handleToggleReview(petition)}
-                >
-                  Cancel
-                </button>
+                <input
+                  type="text"
+                  value={reviewMap[petition._id].prerequisiteComment}
+                  onChange={(e) =>
+                    handleCommentChange(petition._id, e.target.value)
+                  }
+                  className="input"
+                  placeholder="Enter comment (e.g., student lacks prerequisite)"
+                  style={{ marginTop: "8px" }}
+                />
+                <div className="petition-actions">
+                  <button
+                    className="button btn-approve"
+                    onClick={() => handleReviewSubmit(petition._id)}
+                  >
+                    Save Review
+                  </button>
+                  <button
+                    className="button"
+                    onClick={() => handleToggleReview(petition)}
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
             )}
             {votersMap[petition._id] && (
@@ -203,7 +252,7 @@ const TeachersDashboard = () => {
                 <ul>
                   {votersMap[petition._id].map((voter) => (
                     <li key={voter._id}>
-                      {voter.username} ({voter.email})
+                      ID: {voter.idNumber} - Email: {voter.email}
                     </li>
                   ))}
                 </ul>

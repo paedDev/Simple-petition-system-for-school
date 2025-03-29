@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
+import { toast } from "react-hot-toast";
 
 const AdminLogin = () => {
   const [email, setEmail] = useState("");
@@ -22,11 +23,11 @@ const AdminLogin = () => {
         localStorage.setItem("userId", res.data.userId);
         navigate("/admin");
       } else {
-        alert("Not authorized as admin");
+        toast.error("Not authorized as admin");
       }
     } catch (err) {
       console.error(err);
-      alert(err.response?.data.error || "Error during admin login");
+      toast.error(err.response?.data.error || "Error during admin login");
     }
   };
 

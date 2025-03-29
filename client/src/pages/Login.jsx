@@ -1,6 +1,8 @@
+// src/pages/Login.jsx
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
+import { toast } from "react-hot-toast";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -15,21 +17,21 @@ const Login = () => {
         email,
         password,
       });
+      // Check that the user has a student role only
+      if (res.data.role !== "student") {
+        toast.error(
+          "Only students are allowed to login here. Please use the appropriate login page."
+        );
+        return;
+      }
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("role", res.data.role);
       localStorage.setItem("userId", res.data.userId);
-      // Navigate based on role:
-      if (res.data.role === "admin") {
-        navigate("/admin");
-      } else if (res.data.role === "teacherAdmin") {
-        navigate("/teacher");
-      } else {
-        // default to student dashboard or homepage
-        navigate("/");
-      }
+      // Navigate to student dashboard ("/") or your student home page
+      navigate("/");
     } catch (err) {
       console.error(err);
-      alert(err.response?.data.error || "Error during login");
+      toast.error(err.response?.data.error || "Error during login");
     }
   };
 
@@ -78,6 +80,7 @@ const Login = () => {
             Signup
           </Link>
         </p>
+        {/* Optional: links for admin and teacher login */}
         <p style={{ textAlign: "center", marginTop: "10px" }}>
           Are you an admin?{" "}
           <Link

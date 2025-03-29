@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
+import { toast } from "react-hot-toast";
 
 const TeacherLogin = () => {
   const [email, setEmail] = useState("");
@@ -22,11 +23,11 @@ const TeacherLogin = () => {
         localStorage.setItem("userId", res.data.userId);
         navigate("/teacher");
       } else {
-        alert("Not authorized as teacher");
+        toast.error("Not authorized as teacher");
       }
     } catch (err) {
       console.error(err);
-      alert(err.response?.data.error || "Error during teacher login");
+      toast.error(err.response?.data.error || "Error during teacher login");
     }
   };
 
@@ -67,12 +68,12 @@ const TeacherLogin = () => {
           Login as Teacher
         </button>
         <p style={{ textAlign: "center", marginTop: "15px" }}>
-          Don't have an account?{" "}
+          Not a teacher?{" "}
           <Link
-            to="/signup"
+            to="/login"
             style={{ color: "#0275d8", textDecoration: "underline" }}
           >
-            Signup
+            Student Login
           </Link>
         </p>
       </form>
