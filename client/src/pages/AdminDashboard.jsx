@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 
 const AdminDashboard = () => {
+  const [viewMode, setViewMode] = useState("list");
   const [petitions, setPetitions] = useState([]);
   const [votersMap, setVotersMap] = useState({});
   // actionMap manages inline admin action mode for a petition:
@@ -12,6 +13,8 @@ const AdminDashboard = () => {
   const [actionMap, setActionMap] = useState({});
   // For search functionality (by title)
   const [searchQuery, setSearchQuery] = useState("");
+  // Toggle between list and grid view
+  const [isGridView, setIsGridView] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -28,7 +31,7 @@ const AdminDashboard = () => {
       const res = await axios.get("http://localhost:5000/api/petitions", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      // Filter petitions to show only those that have been reviewed by a teacher (either teacherReview or prerequisiteComment exists)
+      // Filter petitions to show only those that have been reviewed by a teacher
       const reviewed = res.data.filter(
         (petition) => petition.teacherReview || petition.prerequisiteComment
       );
@@ -97,7 +100,7 @@ const AdminDashboard = () => {
     try {
       const token = localStorage.getItem("token");
       const { newStatus, adminComment } = actionMap[petitionId];
-      // Update petition with new status and adminComment.
+      // Update petition with new status and admin comment.
       await axios.put(
         `http://localhost:5000/api/petitions/${petitionId}`,
         { status: newStatus, adminComment },
@@ -128,22 +131,33 @@ const AdminDashboard = () => {
     navigate("/login");
   };
 
+  // Toggle grid view
+  const toggleGridView = () => {
+    setIsGridView((prev) => !prev);
+  };
+  const toggleViewMode = () => {
+    setViewMode((prevMode) => (prevMode === "list" ? "grid" : "list"));
+  };
+
   // Filter petitions by title based on the search query (case-insensitive)
   const filteredPetitions = petitions.filter((petition) =>
     petition.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
-    <div className="container">
+    <div className={`container ${viewMode === "grid" ? "grid-view" : "list-view"}`}>
       <div className="header">
         <h1 className="title">Admin Dashboard</h1>
-        <button className="button btn-logout" onClick={handleLogout}>
-          Logout
-        </button>
+        <div>
+
+          <button className="button btn-logout" onClick={handleLogout}>
+            Logout
+          </button>
+        </div>
       </div>
 
-      {/* Search Input */}
-      <div style={{ margin: "20px 0", textAlign: "center", display: "flex", justifyContent: "space-around", width: "50%", margin: "auto", marginBottom: "5px" }}>
+
+      <div style={{ margin: "20px 0", textAlign: "center", display: "flex", justifyContent: "space-around", width: "80%", margin: "auto", marginBottom: "5px" }}>
         <div>
           <p>Search the subject </p>
         </div>
@@ -153,153 +167,167 @@ const AdminDashboard = () => {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="input"
-          style={{ width: "50%" }}
+          style={{ width: "60%", marginRight: "10px" }}
         />
+        <div>
+          <button className="button-grid" style={{}} onClick={toggleViewMode}>
+            {viewMode === "list" ? "Grid View" : "List View"}
+          </button>
+        </div>
       </div>
 
       {filteredPetitions.length === 0 ? (
         <p>No reviewed petitions found.</p>
       ) : (
-        filteredPetitions.map((petition) => (
-          <div key={petition._id} className="petition-card">
-            <h2 className="petition-title">{petition.title}</h2>
-            <p className="petition-description">{petition.description}</p>
-            <p className="petition-meta">Status: {petition.status}</p>
-            <p className="petition-meta">
-              Votes: {petition.votes?.length || 0}
-            </p>
-            <p className="petition-meta">
-              By: {petition.createdBy?.username || "Unknown"}
-            </p>
-            <p className="petition-meta">
-              Created: {new Date(petition.createdAt).toLocaleString()}
-            </p>
-            {/* Render teacher review and comment if available */}
-            {petition.teacherReview && (
+        <div className={isGridView ? "grid-container" : "list-container"}>
+          {filteredPetitions.map((petition) => (
+            <div key={petition._id} className="petition-card">
+              <h2 className="petition-title">{petition.title}</h2>
+              <p className="petition-description">{petition.description}</p>
+              <p className="petition-meta">Status: {petition.status}</p>
               <p className="petition-meta">
-                Teacher Review: {petition.teacherReview}
+                Votes: {petition.votes?.length || 0}
               </p>
-            )}
-            {petition.adminComment && (
               <p className="petition-meta">
-                Reason: {petition.adminComment}
+                By: {petition.createdBy?.username || "Unknown"}
               </p>
-            )}
-            <div className="petition-actions">
-              <button
-                className="button btn-approve"
-                onClick={() => toggleActionMode(petition._id, "approved")}
-              >
-                Approve
-              </button>
-              <button
-                className="button btn-deny"
-                onClick={() => toggleActionMode(petition._id, "denied")}
-              >
-                Deny
-              </button>
-              {petition.votes?.length >= 40 ? (
-                <button className="button btn-close" disabled>
-                  Already reached 40 votes
-                </button>
-              ) : petition.status !== "closed" ? (
-                <button
-                  className="button btn-close"
-                  onClick={() => toggleActionMode(petition._id, "closed")}
-                >
-                  Close Petition
-                </button>
-              ) : (
-                <button
-                  className="button btn-open"
-                  onClick={() => toggleActionMode(petition._id, "open")}
-                >
-                  Reopen Petition
-                </button>
+              <p className="petition-meta">
+                Created: {new Date(petition.createdAt).toLocaleString()}
+              </p>
+              {/* Render teacher review and admin comment if available */}
+              {petition.teacherReview && (
+                <p className="petition-meta">
+                  Teacher Review: {petition.teacherReview}
+                </p>
               )}
-              <button
-                className="button btn-delete"
-                onClick={() => {
-                  axios
-                    .delete(`http://localhost:5000/api/petitions/${petition._id}`, {
-                      headers: {
-                        Authorization: `Bearer ${localStorage.getItem("token")}`,
-                      },
-                    })
-                    .then(() => {
-                      toast.success(`Petition ${petition._id} deleted successfully`);
-                      fetchPetitions();
-                    })
-                    .catch((err) => {
-                      console.error(err);
-                      toast.error("Error deleting petition");
-                    });
-                }}
-              >
-                Delete
-              </button>
-              <button
-                className="button"
-                onClick={() => handleToggleVoters(petition._id)}
-              >
-                {votersMap[petition._id] ? "Hide Voters" : "Show Voters"}
-              </button>
-            </div>
+              {petition.prerequisiteComment && (
+                <p>Teacher Comment: {petition.prerequisiteComment}
+                </p>
+              )}
 
-            {/* Inline admin action mode: input for admin comment */}
-            {actionMap[petition._id] && actionMap[petition._id].isActioning && (
-              <div className="action-container" style={{ marginTop: "10px" }}>
-                <input
-                  type="text"
-                  value={actionMap[petition._id].adminComment}
-                  onChange={(e) =>
-                    setActionMap((prev) => ({
-                      ...prev,
-                      [petition._id]: {
-                        ...prev[petition._id],
-                        adminComment: e.target.value,
-                      },
-                    }))
-                  }
-                  className="input"
-                  placeholder="Enter reason (e.g., Student lacks prerequisite)"
-                  style={{ width: "60%", marginRight: "10px" }}
-                />
+              {petition.adminComment && (
+                <p className="petition-meta">
+                  Reason: {petition.adminComment}
+                </p>
+              )}
+              <div className="petition-actions">
                 <button
                   className="button btn-approve"
-                  onClick={() => handleConfirmAction(petition._id)}
+                  onClick={() => toggleActionMode(petition._id, "approved")}
                 >
-                  Confirm
+                  Approve
+                </button>
+                <button
+                  className="button btn-deny"
+                  onClick={() => toggleActionMode(petition._id, "denied")}
+                >
+                  Deny
+                </button>
+                {petition.votes?.length >= 40 ? (
+                  <button className="button btn-close" disabled>
+                    Already reached 40 votes
+                  </button>
+                ) : petition.status !== "closed" ? (
+                  <button
+                    className="button btn-close"
+                    onClick={() => toggleActionMode(petition._id, "closed")}
+                  >
+                    Close Petition
+                  </button>
+                ) : (
+                  <button
+                    className="button btn-open"
+                    onClick={() => toggleActionMode(petition._id, "open")}
+                  >
+                    Reopen Petition
+                  </button>
+                )}
+                <button
+                  className="button btn-delete"
+                  onClick={() => {
+                    axios
+                      .delete(`http://localhost:5000/api/petitions/${petition._id}`, {
+                        headers: {
+                          Authorization: `Bearer ${localStorage.getItem("token")}`,
+                        },
+                      })
+                      .then(() => {
+                        toast.success(
+                          `Petition ${petition._id} deleted successfully`
+                        );
+                        fetchPetitions();
+                      })
+                      .catch((err) => {
+                        console.error(err);
+                        toast.error("Error deleting petition");
+                      });
+                  }}
+                >
+                  Delete
                 </button>
                 <button
                   className="button"
-                  onClick={() =>
-                    setActionMap((prev) => {
-                      const newState = { ...prev };
-                      delete newState[petition._id];
-                      return newState;
-                    })
-                  }
+                  onClick={() => handleToggleVoters(petition._id)}
                 >
-                  Cancel
+                  {votersMap[petition._id] ? "Hide Voters" : "Show Voters"}
                 </button>
               </div>
-            )}
 
-            {votersMap[petition._id] && (
-              <div className="voters-list">
-                <h3>Voters:</h3>
-                <ul>
-                  {votersMap[petition._id].map((voter) => (
-                    <li key={voter._id}>
-                      ID: {voter.idNumber} - Email: {voter.email}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-        ))
+              {/* Inline admin action mode: input for reason */}
+              {actionMap[petition._id] && actionMap[petition._id].isActioning && (
+                <div className="action-container" style={{ marginTop: "10px" }}>
+                  <input
+                    type="text"
+                    value={actionMap[petition._id].adminComment}
+                    onChange={(e) =>
+                      setActionMap((prev) => ({
+                        ...prev,
+                        [petition._id]: {
+                          ...prev[petition._id],
+                          adminComment: e.target.value,
+                        },
+                      }))
+                    }
+                    className="input"
+                    placeholder="Enter reason (e.g., Student lacks prerequisite)"
+                    style={{ width: "60%", marginRight: "10px" }}
+                  />
+                  <button
+                    className="button btn-approve"
+                    onClick={() => handleConfirmAction(petition._id)}
+                  >
+                    Confirm
+                  </button>
+                  <button
+                    className="button"
+                    onClick={() =>
+                      setActionMap((prev) => {
+                        const newState = { ...prev };
+                        delete newState[petition._id];
+                        return newState;
+                      })
+                    }
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
+
+              {votersMap[petition._id] && (
+                <div className="voters-list">
+                  <h3>Voters:</h3>
+                  <ul>
+                    {votersMap[petition._id].map((voter) => (
+                      <li key={voter._id}>
+                        ID: {voter.idNumber} - Email: {voter.email}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );

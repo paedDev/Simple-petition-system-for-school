@@ -40,6 +40,15 @@ body {
   margin-right: 5px;
   transition: background-color 0.3s ease;
 }
+.button-grid {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  display: block;
+  color: white;
+  background-color: #0275d8;
+}
 
 .btn-logout {
   background-color: #d9534f;
@@ -124,6 +133,13 @@ body {
   margin-top: 10px;
 }
 
+/* New CSS for Grid View - adds spacing between buttons */
+.grid-view .petition-card .petition-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
 /* Voters List Styles */
 .voters-list {
   background-color: #eef;
@@ -156,7 +172,6 @@ body {
 }
 
 /* Auth Page Styles */
-
 .auth-page {
   min-height: 100vh;
   display: flex;
@@ -224,4 +239,11 @@ p a {
 
 p a:hover {
   text-decoration: underline;
+}
+
+.grid-view .petition-card {
+  width: calc(45% - 20px);
+  margin: 10px;
+  display: inline-block;
+  vertical-align: top;
 }

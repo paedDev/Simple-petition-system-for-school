@@ -14,6 +14,8 @@ const PetitionList = () => {
   const [votersMap, setVotersMap] = useState({});
   // Map to handle edit state per petition: { [petitionId]: { isEditing, title, description } }
   const [editMap, setEditMap] = useState({});
+  // View mode: "list" or "grid"
+  const [viewMode, setViewMode] = useState("list");
   const role = localStorage.getItem("role");
   const navigate = useNavigate();
 
@@ -79,7 +81,6 @@ const PetitionList = () => {
 
   const handleToggleVoters = async (petitionId) => {
     if (votersMap[petitionId]) {
-      // Hide voters if already shown
       setVotersMap((prev) => ({ ...prev, [petitionId]: null }));
     } else {
       try {
@@ -127,8 +128,7 @@ const PetitionList = () => {
   const handleEditSubmit = async (petitionId) => {
     try {
       const token = localStorage.getItem("token");
-      const { title: newTitle, description: newDescription } =
-        editMap[petitionId];
+      const { title: newTitle, description: newDescription } = editMap[petitionId];
       await axios.put(
         `http://localhost:5000/api/petitions/${petitionId}`,
         { title: newTitle, description: newDescription },
@@ -152,18 +152,26 @@ const PetitionList = () => {
     navigate("/login");
   };
 
+  // Toggle between list and grid views
+  const toggleViewMode = () => {
+    setViewMode((prevMode) => (prevMode === "list" ? "grid" : "list"));
+  };
+
   // Filter petitions by title based on the search query (case-insensitive)
   const filteredPetitions = petitions.filter((petition) =>
     petition.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
-    <div className="container">
+    <div className={`container ${viewMode === "grid" ? "grid-view" : "list-view"}`}>
       <div className="header">
         <h1 className="title">Petitions</h1>
-        <button className="button btn-logout" onClick={handleLogout}>
-          Logout
-        </button>
+        <div>
+
+          <button className="button btn-logout" onClick={handleLogout}>
+            Logout
+          </button>
+        </div>
       </div>
 
       {/* Only for students: display form to create petition */}
@@ -194,8 +202,7 @@ const PetitionList = () => {
         </form>
       )}
 
-      {/* Search Input */}
-      <div style={{ margin: "20px 0", textAlign: "center", display: "flex", justifyContent: "space-around", width: "50%", margin: "auto", marginBottom: "5px" }}>
+      <div style={{ margin: "20px 0", textAlign: "center", display: "flex", justifyContent: "space-around", width: "80%", margin: "auto", marginBottom: "5px" }}>
         <div>
           <p>Search the subject </p>
         </div>
@@ -205,9 +212,15 @@ const PetitionList = () => {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="input"
-          style={{ width: "50%" }}
+          style={{ width: "60%", marginRight: "10px" }}
         />
+        <div>
+          <button className="button-grid" style={{}} onClick={toggleViewMode}>
+            {viewMode === "list" ? "Grid View" : "List View"}
+          </button>
+        </div>
       </div>
+
 
       {filteredPetitions.length === 0 ? (
         <p>No petitions found matching your search.</p>
@@ -260,7 +273,7 @@ const PetitionList = () => {
                 <p className="petition-meta">
                   Created: {new Date(petition.createdAt).toLocaleString()}
                 </p>
-                {/* For student view, show teacher review and admin comment if petition is not open */}
+                {/* For student view, show teacher review if petition is not open */}
                 {role === "student" && petition.status !== "open" && petition.teacherReview && (
                   <p className="petition-meta">
                     Reviewed by: {petition.teacherReview}
@@ -268,7 +281,7 @@ const PetitionList = () => {
                 )}
                 {role === "student" && petition.status !== "open" && petition.adminComment && (
                   <p className="petition-meta">
-                    Reason: {petition.adminComment}
+                    Admin Decision: {petition.adminComment}
                   </p>
                 )}
                 {role === "teacher" && petition.teacherReview && (
@@ -320,7 +333,7 @@ const PetitionList = () => {
                 </div>
               </>
             )}
-            {filteredPetitions.length > 0 && votersMap[petition._id] && (
+            {votersMap[petition._id] && (
               <div className="voters-list">
                 <h3>Voters:</h3>
                 <ul>
