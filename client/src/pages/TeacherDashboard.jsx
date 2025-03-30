@@ -3,20 +3,16 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
+import { BASE_URL } from "../config/config"; // Import the BASE_URL
 
 const TeachersDashboard = () => {
   const [petitions, setPetitions] = useState([]);
   const [votersMap, setVotersMap] = useState({});
-  // reviewMap manages teacher review mode & comment:
-  // { [petitionId]: { isReviewing, teacherReview, prerequisiteComment } }
   const [reviewMap, setReviewMap] = useState({});
-  // For search functionality (by subject/title)
   const [searchQuery, setSearchQuery] = useState("");
-  // Toggle between grid and list view
   const [viewMode, setViewMode] = useState("list");
   const navigate = useNavigate();
 
-  // Teacher's expertise & username stored in localStorage
   const teacherExpertise = localStorage.getItem("expertise");
   const teacherUsername = localStorage.getItem("username");
 
@@ -31,18 +27,16 @@ const TeachersDashboard = () => {
         navigate("/login");
         return;
       }
-      const res = await axios.get("http://localhost:5000/api/petitions", {
+      const res = await axios.get(`${BASE_URL}/api/petitions`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      // Filter petitions based on teacher's expertise (if provided)
       let filtered = res.data;
       if (teacherExpertise) {
-        filtered = res.data.filter((petition) => {
-          return (
+        filtered = res.data.filter(
+          (petition) =>
             petition.subject &&
             petition.subject.toLowerCase() === teacherExpertise.toLowerCase()
-          );
-        });
+        );
       }
       setPetitions(filtered);
     } catch (err) {
@@ -58,7 +52,7 @@ const TeachersDashboard = () => {
       try {
         const token = localStorage.getItem("token");
         const res = await axios.get(
-          `http://localhost:5000/api/petitions/${petitionId}/voters`,
+          `${BASE_URL}/api/petitions/${petitionId}/voters`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setVotersMap((prev) => ({ ...prev, [petitionId]: res.data.voters }));
@@ -69,9 +63,6 @@ const TeachersDashboard = () => {
     }
   };
 
-  // Toggle review mode for a petition.
-  // Prepopulate teacherReview with the petition's teacherReview if available, or use teacherUsername.
-  // Also initialize prerequisiteComment if available.
   const toggleReviewMode = (petition) => {
     setReviewMap((prev) => {
       if (prev[petition._id] && prev[petition._id].isReviewing) {
@@ -92,7 +83,6 @@ const TeachersDashboard = () => {
     });
   };
 
-  // Update teacherReview in reviewMap state.
   const handleReviewChange = (petitionId, value) => {
     setReviewMap((prev) => ({
       ...prev,
@@ -100,7 +90,6 @@ const TeachersDashboard = () => {
     }));
   };
 
-  // Update prerequisiteComment in reviewMap state.
   const handleCommentChange = (petitionId, value) => {
     setReviewMap((prev) => ({
       ...prev,
@@ -108,13 +97,12 @@ const TeachersDashboard = () => {
     }));
   };
 
-  // Submit the teacher review update (both teacherReview and prerequisiteComment).
   const handleReviewSubmit = async (petitionId) => {
     try {
       const token = localStorage.getItem("token");
       const { teacherReview, prerequisiteComment } = reviewMap[petitionId];
       await axios.put(
-        `http://localhost:5000/api/petitions/${petitionId}`,
+        `${BASE_URL}/api/petitions/${petitionId}`,
         { teacherReview, prerequisiteComment },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -136,12 +124,10 @@ const TeachersDashboard = () => {
     navigate("/login");
   };
 
-  // Toggle grid view mode
   const toggleViewMode = () => {
     setViewMode((prev) => (prev === "list" ? "grid" : "list"));
   };
 
-  // Filter petitions by title (or subject) based on the search query (case-insensitive)
   const filteredPetitions = petitions.filter((petition) =>
     petition.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -189,7 +175,7 @@ const TeachersDashboard = () => {
           style={{ width: "60%", marginRight: "10px" }}
         />
         <div>
-          <button className="button-grid" style={{}} onClick={toggleViewMode}>
+          <button className="button-grid" onClick={toggleViewMode}>
             {viewMode === "list" ? "Grid View" : "List View"}
           </button>
         </div>
@@ -218,7 +204,6 @@ const TeachersDashboard = () => {
               <p className="petition-meta">
                 Created: {new Date(petition.createdAt).toLocaleString()}
               </p>
-              {/* Render teacher review and comment if available */}
               {petition.teacherReview && (
                 <p className="petition-meta">
                   Reviewed by: {petition.teacherReview}

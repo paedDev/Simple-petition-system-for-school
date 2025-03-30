@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from "react-hot-toast";
+import { BASE_URL } from "../config/config";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -13,11 +14,10 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post("http://localhost:5000/api/auth/login", {
+      const res = await axios.post(`${BASE_URL}/api/auth/login`, {
         email,
         password,
       });
-      // Check that the user has a student role only
       if (res.data.role !== "student") {
         toast.error(
           "Only students are allowed to login here. Please use the appropriate login page."
@@ -27,7 +27,6 @@ const Login = () => {
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("role", res.data.role);
       localStorage.setItem("userId", res.data.userId);
-      // Navigate to student dashboard ("/") or your student home page
       navigate("/");
     } catch (err) {
       console.error(err);
@@ -80,7 +79,6 @@ const Login = () => {
             Signup
           </Link>
         </p>
-        {/* Optional: links for admin and teacher login */}
         <p style={{ textAlign: "center", marginTop: "10px" }}>
           Are you an admin?{" "}
           <Link

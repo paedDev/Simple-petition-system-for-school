@@ -3,18 +3,15 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
+import { BASE_URL } from "../config/config";
 
 const PetitionList = () => {
   const [petitions, setPetitions] = useState([]);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  // For search functionality
   const [searchQuery, setSearchQuery] = useState("");
-  // Map petition ID to its voters list; null means hidden
   const [votersMap, setVotersMap] = useState({});
-  // Map to handle edit state per petition: { [petitionId]: { isEditing, title, description } }
   const [editMap, setEditMap] = useState({});
-  // View mode: "list" or "grid"
   const [viewMode, setViewMode] = useState("list");
   const role = localStorage.getItem("role");
   const navigate = useNavigate();
@@ -22,10 +19,9 @@ const PetitionList = () => {
   const fetchPetitions = async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await axios.get("http://localhost:5000/api/petitions", {
+      const res = await axios.get(`${BASE_URL}/api/petitions`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      // Sort petitions by votes length in descending order.
       const sorted = res.data.sort(
         (a, b) => (b.votes?.length || 0) - (a.votes?.length || 0)
       );
@@ -45,7 +41,7 @@ const PetitionList = () => {
     try {
       const token = localStorage.getItem("token");
       await axios.post(
-        "http://localhost:5000/api/petitions",
+        `${BASE_URL}/api/petitions`,
         { title, description },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -63,7 +59,7 @@ const PetitionList = () => {
     try {
       const token = localStorage.getItem("token");
       const res = await axios.post(
-        `http://localhost:5000/api/petitions/${id}/vote`,
+        `${BASE_URL}/api/petitions/${id}/vote`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -86,7 +82,7 @@ const PetitionList = () => {
       try {
         const token = localStorage.getItem("token");
         const res = await axios.get(
-          `http://localhost:5000/api/petitions/${petitionId}/voters`,
+          `${BASE_URL}/api/petitions/${petitionId}/voters`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setVotersMap((prev) => ({ ...prev, [petitionId]: res.data.voters }));
@@ -97,7 +93,6 @@ const PetitionList = () => {
     }
   };
 
-  // Functions for editing a petition (only for students)
   const handleToggleEdit = (petition) => {
     setEditMap((prev) => {
       if (prev[petition._id] && prev[petition._id].isEditing) {
@@ -128,9 +123,10 @@ const PetitionList = () => {
   const handleEditSubmit = async (petitionId) => {
     try {
       const token = localStorage.getItem("token");
-      const { title: newTitle, description: newDescription } = editMap[petitionId];
+      const { title: newTitle, description: newDescription } =
+        editMap[petitionId];
       await axios.put(
-        `http://localhost:5000/api/petitions/${petitionId}`,
+        `${BASE_URL}/api/petitions/${petitionId}`,
         { title: newTitle, description: newDescription },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -152,29 +148,27 @@ const PetitionList = () => {
     navigate("/login");
   };
 
-  // Toggle between list and grid views
   const toggleViewMode = () => {
     setViewMode((prevMode) => (prevMode === "list" ? "grid" : "list"));
   };
 
-  // Filter petitions by title based on the search query (case-insensitive)
   const filteredPetitions = petitions.filter((petition) =>
     petition.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
-    <div className={`container ${viewMode === "grid" ? "grid-view" : "list-view"}`}>
+    <div
+      className={`container ${viewMode === "grid" ? "grid-view" : "list-view"}`}
+    >
       <div className="header">
         <h1 className="title">Petitions</h1>
         <div>
-
           <button className="button btn-logout" onClick={handleLogout}>
             Logout
           </button>
         </div>
       </div>
 
-      {/* Only for students: display form to create petition */}
       {role === "student" && (
         <form
           onSubmit={handleSubmit}
@@ -202,7 +196,17 @@ const PetitionList = () => {
         </form>
       )}
 
-      <div style={{ margin: "20px 0", textAlign: "center", display: "flex", justifyContent: "space-around", width: "80%", margin: "auto", marginBottom: "5px" }}>
+      <div
+        style={{
+          margin: "20px 0",
+          textAlign: "center",
+          display: "flex",
+          justifyContent: "space-around",
+          width: "80%",
+          margin: "auto",
+          marginBottom: "5px",
+        }}
+      >
         <div>
           <p>Search the subject </p>
         </div>
@@ -215,12 +219,11 @@ const PetitionList = () => {
           style={{ width: "60%", marginRight: "10px" }}
         />
         <div>
-          <button className="button-grid" style={{}} onClick={toggleViewMode}>
+          <button className="button-grid" onClick={toggleViewMode}>
             {viewMode === "list" ? "Grid View" : "List View"}
           </button>
         </div>
       </div>
-
 
       {filteredPetitions.length === 0 ? (
         <p>No petitions found matching your search.</p>
@@ -240,7 +243,11 @@ const PetitionList = () => {
                 <textarea
                   value={editMap[petition._id].description}
                   onChange={(e) =>
-                    handleEditChange(petition._id, "description", e.target.value)
+                    handleEditChange(
+                      petition._id,
+                      "description",
+                      e.target.value
+                    )
                   }
                   className="input"
                 />
@@ -273,17 +280,20 @@ const PetitionList = () => {
                 <p className="petition-meta">
                   Created: {new Date(petition.createdAt).toLocaleString()}
                 </p>
-                {/* For student view, show teacher review if petition is not open */}
-                {role === "student" && petition.status !== "open" && petition.teacherReview && (
-                  <p className="petition-meta">
-                    Reviewed by: {petition.teacherReview}
-                  </p>
-                )}
-                {role === "student" && petition.status !== "open" && petition.adminComment && (
-                  <p className="petition-meta">
-                    Admin Decision: {petition.adminComment}
-                  </p>
-                )}
+                {role === "student" &&
+                  petition.status !== "open" &&
+                  petition.teacherReview && (
+                    <p className="petition-meta">
+                      Reviewed by: {petition.teacherReview}
+                    </p>
+                  )}
+                {role === "student" &&
+                  petition.status !== "open" &&
+                  petition.adminComment && (
+                    <p className="petition-meta">
+                      Admin Decision: {petition.adminComment}
+                    </p>
+                  )}
                 {role === "teacher" && petition.teacherReview && (
                   <p className="petition-meta">
                     Reviewed by: {petition.teacherReview}
@@ -312,7 +322,9 @@ const PetitionList = () => {
                         className="button"
                         onClick={() => handleToggleVoters(petition._id)}
                       >
-                        {votersMap[petition._id] ? "Hide Voters" : "Show Voters"}
+                        {votersMap[petition._id]
+                          ? "Hide Voters"
+                          : "Show Voters"}
                       </button>
                       <button
                         className="button"

@@ -1,7 +1,9 @@
+// src/pages/TeacherLogin.jsx
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from "react-hot-toast";
+import { BASE_URL } from "../config/config";
 
 const TeacherLogin = () => {
   const [email, setEmail] = useState("");
@@ -12,11 +14,10 @@ const TeacherLogin = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post("http://localhost:5000/api/auth/login", {
+      const res = await axios.post(`${BASE_URL}/api/auth/login`, {
         email,
         password,
       });
-      // Check that the user has teacher admin role
       if (res.data.role === "teacherAdmin") {
         localStorage.setItem("token", res.data.token);
         localStorage.setItem("role", res.data.role);
