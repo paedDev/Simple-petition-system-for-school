@@ -225,13 +225,12 @@ const PetitionList = () => {
 
       <div
         style={{
-          margin: "20px 0",
+          margin: "20px 5px 0 0",
           textAlign: "center",
           display: "flex",
           justifyContent: "space-around",
           width: "80%",
           margin: "auto",
-          marginBottom: "5px",
         }}
       >
         <p>Search the subject</p>

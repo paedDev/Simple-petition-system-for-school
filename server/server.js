@@ -13,13 +13,13 @@ const app = express();
 app.use(express.json());
 
 // CORS configuration
-app.use(
-  cors({
-    origin: ["https://jannoelpaed.vercel.app"], // Allow only your frontend URL
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true,
-  })
-);
+// app.use(
+//   cors({
+//     origin: ["https://jannoelpaed.vercel.app"], // Allow only your frontend URL
+//     methods: ["GET", "POST", "PUT", "DELETE"],
+//     credentials: true,
+//   })
+// );
 
 // MongoDB connection
 mongoose.set("strictQuery", false);
