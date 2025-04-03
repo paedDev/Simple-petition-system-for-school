@@ -3,24 +3,30 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
-
+import { BASE_URL } from "../config/config";
 const AdminDashboard = () => {
+  // Common state for view mode, petitions, voters, etc.
   const [viewMode, setViewMode] = useState("list");
   const [petitions, setPetitions] = useState([]);
   const [votersMap, setVotersMap] = useState({});
-  // actionMap manages inline admin action mode for a petition:
-  // { [petitionId]: { isActioning: true, newStatus, adminComment } }
+  // actionMap manages inline admin action mode for a petition
   const [actionMap, setActionMap] = useState({});
-  // For search functionality (by title)
+  // reviewMap manages the teacher review mode for a petition
+  const [reviewMap, setReviewMap] = useState({});
+  // For search functionality
   const [searchQuery, setSearchQuery] = useState("");
-  // Toggle between list and grid view
+  // Toggle between list and grid view (optional)
   const [isGridView, setIsGridView] = useState(false);
   const navigate = useNavigate();
+
+  // Optionally, if you want to prepopulate the teacher review with the logged in username:
+  const userName = localStorage.getItem("username");
 
   useEffect(() => {
     fetchPetitions();
   }, []);
 
+  // Fetch all petitions
   const fetchPetitions = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -28,15 +34,11 @@ const AdminDashboard = () => {
         navigate("/login");
         return;
       }
-      const res = await axios.get("http://localhost:5000/api/petitions", {
+      const res = await axios.get(`${BASE_URL}/api/petitions`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      // Filter petitions to show only those that have been reviewed by a teacher
-      const reviewed = res.data.filter(
-        (petition) => petition.teacherReview || petition.prerequisiteComment
-      );
-      // Sort reviewed petitions by votes in descending order.
-      const sorted = reviewed.sort(
+      // Sort petitions by vote count descending
+      const sorted = res.data.sort(
         (a, b) => (b.votes?.length || 0) - (a.votes?.length || 0)
       );
       setPetitions(sorted);
@@ -46,30 +48,74 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleToggleVoters = async (petitionId) => {
-    if (votersMap[petitionId]) {
-      setVotersMap((prev) => ({ ...prev, [petitionId]: null }));
-    } else {
-      try {
-        const token = localStorage.getItem("token");
-        const res = await axios.get(
-          `http://localhost:5000/api/petitions/${petitionId}/voters`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        setVotersMap((prev) => ({ ...prev, [petitionId]: res.data.voters }));
-      } catch (err) {
-        console.error(err);
-        toast.error("Error fetching voters");
+  // --- Teacher Review Functionality ---
+
+  // Toggle teacher review mode for a petition
+  const toggleReviewMode = (petition) => {
+    setReviewMap((prev) => {
+      if (prev[petition._id] && prev[petition._id].isReviewing) {
+        const newState = { ...prev };
+        delete newState[petition._id];
+        return newState;
+      } else {
+        return {
+          ...prev,
+          [petition._id]: {
+            isReviewing: true,
+            teacherReview: petition.teacherReview || userName || "",
+            prerequisiteComment: petition.prerequisiteComment || "",
+          },
+        };
       }
+    });
+  };
+
+  // Handle changes in the teacher review input
+  const handleReviewChange = (petitionId, value) => {
+    setReviewMap((prev) => ({
+      ...prev,
+      [petitionId]: { ...prev[petitionId], teacherReview: value },
+    }));
+  };
+
+  // Handle changes in the teacher comment input
+  const handleCommentChange = (petitionId, value) => {
+    setReviewMap((prev) => ({
+      ...prev,
+      [petitionId]: { ...prev[petitionId], prerequisiteComment: value },
+    }));
+  };
+
+  // Submit the teacher review update
+  const handleReviewSubmit = async (petitionId) => {
+    try {
+      const token = localStorage.getItem("token");
+      const { teacherReview, prerequisiteComment } = reviewMap[petitionId];
+      await axios.put(
+        `${BASE_URL}/api/petitions/${petitionId}`,
+        { teacherReview, prerequisiteComment },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      // Remove review mode for this petition
+      setReviewMap((prev) => {
+        const newState = { ...prev };
+        delete newState[petitionId];
+        return newState;
+      });
+      toast.success("Petition reviewed successfully");
+      fetchPetitions();
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data.error || "Error updating review");
     }
   };
 
-  // Toggle action mode for a petition with the given target status.
-  // For "approved", prepopulate the reason with a default message.
+  // --- Admin Inline Actions ---
+
+  // Toggle inline admin action mode (approve, deny, close, or reopen)
   const toggleActionMode = (petitionId, targetStatus) => {
     setActionMap((prev) => {
       if (prev[petitionId] && prev[petitionId].isActioning) {
-        // Cancel action mode for this petition.
         const newState = { ...prev };
         delete newState[petitionId];
         return newState;
@@ -87,33 +133,22 @@ const AdminDashboard = () => {
     });
   };
 
-  // Handle changes in the admin comment input.
-  const handleActionCommentChange = (petitionId, value) => {
-    setActionMap((prev) => ({
-      ...prev,
-      [petitionId]: { ...prev[petitionId], adminComment: value },
-    }));
-  };
-
-  // Confirm and submit the admin action.
+  // Confirm and submit the admin action
   const handleConfirmAction = async (petitionId) => {
     try {
       const token = localStorage.getItem("token");
       const { newStatus, adminComment } = actionMap[petitionId];
-      // Update petition with new status and admin comment.
       await axios.put(
-        `http://localhost:5000/api/petitions/${petitionId}`,
+        `${BASE_URL}/api/petitions/${petitionId}`,
         { status: newStatus, adminComment },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      // Update local state.
       setPetitions((prev) =>
         prev.map((p) =>
           p._id === petitionId ? { ...p, status: newStatus, adminComment } : p
         )
       );
       toast.success(`Petition ${petitionId} updated to ${newStatus}`);
-      // Remove action mode for this petition.
       setActionMap((prev) => {
         const newState = { ...prev };
         delete newState[petitionId];
@@ -125,41 +160,85 @@ const AdminDashboard = () => {
     }
   };
 
+  // Toggle voters list for a petition
+  const handleToggleVoters = async (petitionId) => {
+    if (votersMap[petitionId]) {
+      setVotersMap((prev) => ({ ...prev, [petitionId]: null }));
+    } else {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await axios.get(
+          `${BASE_URL}/api/petitions/${petitionId}/voters`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        setVotersMap((prev) => ({ ...prev, [petitionId]: res.data.voters }));
+      } catch (err) {
+        console.error(err);
+        toast.error("Error fetching voters");
+      }
+    }
+  };
+
+  // Delete a petition
+  const handleDeletePetition = (petitionId) => {
+    const token = localStorage.getItem("token");
+    axios
+      .delete(`${BASE_URL}/api/petitions/${petitionId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then(() => {
+        toast.success(`Petition ${petitionId} deleted successfully`);
+        fetchPetitions();
+      })
+      .catch((err) => {
+        console.error(err);
+        toast.error("Error deleting petition");
+      });
+  };
+
+  // Logout handler
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("role");
     navigate("/login");
   };
 
-  // Toggle grid view
-  const toggleGridView = () => {
-    setIsGridView((prev) => !prev);
-  };
+  // Toggle view mode (list/grid)
   const toggleViewMode = () => {
     setViewMode((prevMode) => (prevMode === "list" ? "grid" : "list"));
   };
 
-  // Filter petitions by title based on the search query (case-insensitive)
+  // Filter petitions by title (case-insensitive)
   const filteredPetitions = petitions.filter((petition) =>
     petition.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
-    <div className={`container ${viewMode === "grid" ? "grid-view" : "list-view"}`}>
+    <div
+      className={`container ${viewMode === "grid" ? "grid-view" : "list-view"}`}
+    >
       <div className="header">
-        <h1 className="title">Admin Dashboard</h1>
+        <h1 className="title">Dashboard</h1>
         <div>
-
           <button className="button btn-logout" onClick={handleLogout}>
             Logout
           </button>
         </div>
       </div>
 
-
-      <div style={{ margin: "20px 0", textAlign: "center", display: "flex", justifyContent: "space-around", width: "80%", margin: "auto", marginBottom: "5px" }}>
+      <div
+        style={{
+          margin: "20px 0",
+          textAlign: "center",
+          display: "flex",
+          justifyContent: "space-around",
+          width: "80%",
+          margin: "auto",
+          marginBottom: "5px",
+        }}
+      >
         <div>
-          <p>Search the subject </p>
+          <p>Search the subject</p>
         </div>
         <input
           type="text"
@@ -170,14 +249,14 @@ const AdminDashboard = () => {
           style={{ width: "60%", marginRight: "10px" }}
         />
         <div>
-          <button className="button-grid" style={{}} onClick={toggleViewMode}>
+          <button className="button-grid" onClick={toggleViewMode}>
             {viewMode === "list" ? "Grid View" : "List View"}
           </button>
         </div>
       </div>
 
       {filteredPetitions.length === 0 ? (
-        <p>No reviewed petitions found.</p>
+        <p>No petitions found.</p>
       ) : (
         <div className={isGridView ? "grid-container" : "list-container"}>
           {filteredPetitions.map((petition) => (
@@ -194,23 +273,27 @@ const AdminDashboard = () => {
               <p className="petition-meta">
                 Created: {new Date(petition.createdAt).toLocaleString()}
               </p>
-              {/* Render teacher review and admin comment if available */}
+
+              {/* Show teacher review info if available */}
               {petition.teacherReview && (
                 <p className="petition-meta">
                   Teacher Review: {petition.teacherReview}
                 </p>
               )}
               {petition.prerequisiteComment && (
-                <p>Teacher Comment: {petition.prerequisiteComment}
-                </p>
+                <p>Teacher Comment: {petition.prerequisiteComment}</p>
+              )}
+              {petition.adminComment && (
+                <p className="petition-meta">Reason: {petition.adminComment}</p>
               )}
 
-              {petition.adminComment && (
-                <p className="petition-meta">
-                  Reason: {petition.adminComment}
-                </p>
-              )}
               <div className="petition-actions">
+                <button
+                  className="button"
+                  onClick={() => toggleReviewMode(petition)}
+                >
+                  {petition.teacherReview ? "Edit Review" : "Review"}
+                </button>
                 <button
                   className="button btn-approve"
                   onClick={() => toggleActionMode(petition._id, "approved")}
@@ -244,24 +327,7 @@ const AdminDashboard = () => {
                 )}
                 <button
                   className="button btn-delete"
-                  onClick={() => {
-                    axios
-                      .delete(`http://localhost:5000/api/petitions/${petition._id}`, {
-                        headers: {
-                          Authorization: `Bearer ${localStorage.getItem("token")}`,
-                        },
-                      })
-                      .then(() => {
-                        toast.success(
-                          `Petition ${petition._id} deleted successfully`
-                        );
-                        fetchPetitions();
-                      })
-                      .catch((err) => {
-                        console.error(err);
-                        toast.error("Error deleting petition");
-                      });
-                  }}
+                  onClick={() => handleDeletePetition(petition._id)}
                 >
                   Delete
                 </button>
@@ -273,46 +339,91 @@ const AdminDashboard = () => {
                 </button>
               </div>
 
-              {/* Inline admin action mode: input for reason */}
-              {actionMap[petition._id] && actionMap[petition._id].isActioning && (
-                <div className="action-container" style={{ marginTop: "10px" }}>
-                  <input
-                    type="text"
-                    value={actionMap[petition._id].adminComment}
-                    onChange={(e) =>
-                      setActionMap((prev) => ({
-                        ...prev,
-                        [petition._id]: {
-                          ...prev[petition._id],
-                          adminComment: e.target.value,
-                        },
-                      }))
-                    }
-                    className="input"
-                    placeholder="Enter reason (e.g., Student lacks prerequisite)"
-                    style={{ width: "60%", marginRight: "10px" }}
-                  />
-                  <button
-                    className="button btn-approve"
-                    onClick={() => handleConfirmAction(petition._id)}
-                  >
-                    Confirm
-                  </button>
-                  <button
-                    className="button"
-                    onClick={() =>
-                      setActionMap((prev) => {
-                        const newState = { ...prev };
-                        delete newState[petition._id];
-                        return newState;
-                      })
-                    }
-                  >
-                    Cancel
-                  </button>
-                </div>
-              )}
+              {/* Inline teacher review section */}
+              {reviewMap[petition._id] &&
+                reviewMap[petition._id].isReviewing && (
+                  <div className="review-container">
+                    <input
+                      type="text"
+                      value={reviewMap[petition._id].teacherReview}
+                      onChange={(e) =>
+                        handleReviewChange(petition._id, e.target.value)
+                      }
+                      className="input"
+                      placeholder="Enter your review (e.g., Sir Warren)"
+                    />
+                    <input
+                      type="text"
+                      value={reviewMap[petition._id].prerequisiteComment}
+                      onChange={(e) =>
+                        handleCommentChange(petition._id, e.target.value)
+                      }
+                      className="input"
+                      placeholder="Enter comment (e.g., student lacks prerequisite)"
+                      style={{ marginTop: "8px" }}
+                    />
+                    <div className="petition-actions">
+                      <button
+                        className="button btn-approve"
+                        onClick={() => handleReviewSubmit(petition._id)}
+                      >
+                        Save Review
+                      </button>
+                      <button
+                        className="button"
+                        onClick={() => toggleReviewMode(petition)}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
 
+              {/* Inline admin action section */}
+              {actionMap[petition._id] &&
+                actionMap[petition._id].isActioning && (
+                  <div
+                    className="action-container"
+                    style={{ marginTop: "10px" }}
+                  >
+                    <input
+                      type="text"
+                      value={actionMap[petition._id].adminComment}
+                      onChange={(e) =>
+                        setActionMap((prev) => ({
+                          ...prev,
+                          [petition._id]: {
+                            ...prev[petition._id],
+                            adminComment: e.target.value,
+                          },
+                        }))
+                      }
+                      className="input"
+                      placeholder="Enter reason (e.g., Student lacks prerequisite)"
+                      style={{ width: "60%", marginRight: "10px" }}
+                    />
+                    <button
+                      className="button btn-approve"
+                      onClick={() => handleConfirmAction(petition._id)}
+                    >
+                      Confirm
+                    </button>
+                    <button
+                      className="button"
+                      onClick={() =>
+                        setActionMap((prev) => {
+                          const newState = { ...prev };
+                          delete newState[petition._id];
+                          return newState;
+                        })
+                      }
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )}
+
+              {/* Voters list */}
               {votersMap[petition._id] && (
                 <div className="voters-list">
                   <h3>Voters:</h3>

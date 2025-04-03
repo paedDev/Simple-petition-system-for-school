@@ -4,7 +4,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { toast } from "react-hot-toast";
 
 const AdminLogin = () => {
-  const [email, setEmail] = useState("");
+  const [idNumber, setIdNumber] = useState(""); // Use idNumber instead of email
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
@@ -13,7 +13,7 @@ const AdminLogin = () => {
     e.preventDefault();
     try {
       const res = await axios.post("http://localhost:5000/api/auth/login", {
-        email,
+        idNumber, // Send idNumber instead of email
         password,
       });
       // Check that the user has admin role
@@ -38,10 +38,10 @@ const AdminLogin = () => {
           Admin Login
         </h2>
         <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          type="text" // Use text for idNumber input
+          placeholder="ID Number"
+          value={idNumber} // Bind idNumber state here
+          onChange={(e) => setIdNumber(e.target.value)} // Update idNumber on change
           className="input"
           required
         />

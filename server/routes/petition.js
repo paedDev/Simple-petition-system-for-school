@@ -6,7 +6,9 @@ const auth = require("../middleware/auth");
 // Create a petition (students only)
 router.post("/", auth, async (req, res) => {
   if (!req.user || req.user.role !== "student") {
-    return res.status(403).json({ error: "Only students can create petitions" });
+    return res
+      .status(403)
+      .json({ error: "Only students can create petitions" });
   }
 
   const { title, description, subject } = req.body;
@@ -29,7 +31,10 @@ router.post("/", auth, async (req, res) => {
 // Get all petitions
 router.get("/", auth, async (req, res) => {
   try {
-    const petitions = await Petition.find().populate("createdBy", "username email");
+    const petitions = await Petition.find().populate(
+      "createdBy",
+      "username email"
+    );
     res.json(petitions);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -39,7 +44,7 @@ router.get("/", auth, async (req, res) => {
 // Vote for a petition (students only)
 router.post("/:id/vote", auth, async (req, res) => {
   if (req.user.role !== "student") {
-    return res.status(403).json({ error: "Only students can vote" });
+    return res.status(403).json({ error: "Only students can petition" });
   }
   try {
     const petition = await Petition.findById(req.params.id);
@@ -47,13 +52,17 @@ router.post("/:id/vote", auth, async (req, res) => {
       return res.status(404).json({ error: "Petition not found" });
     }
     if (petition.status === "closed") {
-      return res.status(400).json({ error: "This petition is closed. Voting is not allowed." });
+      return res
+        .status(400)
+        .json({ error: "This petition is closed. Voting is not allowed." });
     }
     if (petition.votes.length >= 40) {
-      return res.status(400).json({ error: "Vote limit reached. No more votes are allowed." });
+      return res.status(400).json({
+        error: "Petition limit reached. No more petition are allowed.",
+      });
     }
     if (petition.votes.includes(req.user.id)) {
-      return res.status(400).json({ error: "You already voted" });
+      return res.status(400).json({ error: "You already petitioned" });
     }
 
     petition.votes.push(req.user.id);
@@ -67,7 +76,9 @@ router.post("/:id/vote", auth, async (req, res) => {
     res.json({
       petition,
       reached40,
-      message: reached40 ? "Vote recorded and petition reached 40 votes!" : "Vote recorded!",
+      message: reached40
+        ? "Petition recorded and petition reached 40 votes!"
+        : "Petition recorded!",
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -76,9 +87,7 @@ router.post("/:id/vote", auth, async (req, res) => {
 
 // Update petition
 // - Students can update title/description/subject if they are the creator.
-// - Teachers/TeacherAdmins can update teacherReview.
-// - Admins can update status and now adminComment.
-// In your routes/petition.js
+// - Admins can update status and add an admin comment.
 router.put("/:id", auth, async (req, res) => {
   try {
     const petition = await Petition.findById(req.params.id);
@@ -89,17 +98,14 @@ router.put("/:id", auth, async (req, res) => {
     if (req.user.role === "student") {
       // Only the creator can update title/description
       if (petition.createdBy.toString() !== req.user.id) {
-        return res.status(403).json({ error: "Not authorized to update this petition" });
+        return res
+          .status(403)
+          .json({ error: "Not authorized to update this petition" });
       }
       const { title, description, subject } = req.body;
       if (title) petition.title = title;
       if (description) petition.description = description;
       if (subject) petition.subject = subject;
-    } else if (req.user.role === "teacher" || req.user.role === "teacherAdmin") {
-      // Teacher updates the review and comment
-      const { teacherReview, prerequisiteComment } = req.body;
-      if (teacherReview !== undefined) petition.teacherReview = teacherReview;
-      if (prerequisiteComment !== undefined) petition.prerequisiteComment = prerequisiteComment;
     } else if (req.user.role === "admin") {
       // Admin updates the status and can also add an admin comment if needed.
       const { status, adminComment } = req.body;
@@ -113,7 +119,6 @@ router.put("/:id", auth, async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
 
 // Delete petition (admin only)
 router.delete("/:id", auth, async (req, res) => {

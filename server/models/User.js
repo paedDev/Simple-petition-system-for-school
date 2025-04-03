@@ -7,8 +7,13 @@ const UserSchema = new mongoose.Schema({
   idNumber: { type: String, unique: true, required: true },
   role: {
     type: String,
-    enum: ["student", "admin", "teacher", "teacherAdmin"],
+    enum: ["student", "admin"], // Only student and admin roles remain
     default: "student",
+  },
+  course: {
+    type: String,
+    enum: ["BSCpE & BSMexE", "COA", "CITCS"],
+    required: true,
   },
 });
 

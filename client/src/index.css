@@ -1,13 +1,13 @@
-/* Global Styles */
+@import url("https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap");
 body {
-  font-family: Arial, sans-serif;
-  background-color: #f5f5f5;
+  font-family: "Roboto", sans-serif;
+  background-color: white;
   margin: 0;
   padding: 0;
 }
 
 .container {
-  max-width: 800px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
 }
@@ -246,4 +246,164 @@ p a:hover {
   margin: 10px;
   display: inline-block;
   vertical-align: top;
+}
+.split-view {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.column {
+  background: #ffffff;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.column h2 {
+  font-size: 1.25rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #eee;
+}
+
+.open-petitions h2 {
+  color: #2ecc71;
+}
+
+.processed-petitions h2 {
+  color: #e74c3c;
+}
+
+/* Status Badges */
+.status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status-open {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status-approved {
+  background: #cce5ff;
+  color: #004085;
+}
+
+.status-denied {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.status-closed {
+  background: #fff3cd;
+  color: #856404;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .split-view {
+    grid-template-columns: 1fr;
+  }
+
+  .column {
+    margin-bottom: 2rem;
+  }
+}
+
+/* Petition Cards */
+.petition-card {
+  background: #fff;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease;
+  transition-duration: 1s;
+}
+
+.petition-title {
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+  color: #2c3e50;
+}
+
+.petition-description {
+  color: #7f8c8d;
+  margin-bottom: 1rem;
+}
+
+.petition-meta {
+  font-size: 0.9rem;
+  color: #95a5a6;
+  margin-bottom: 0.5rem;
+}
+
+/* Controls */
+.controls {
+  width: 67%;
+  margin: auto;
+  display: flex;
+  gap: 1rem;
+}
+
+.search-input {
+  flex: 1;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.toggle-view {
+  background: #3498db;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.toggle-view:hover {
+  background: #2980b9;
+}
+
+.empty-state {
+  text-align: center;
+  color: #95a5a6;
+  padding: 2rem;
+}
+.voters-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.btn-print {
+  background-color: #4caf50;
+  color: white;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9em;
+}
+
+.btn-print:hover {
+  background-color: #45a049;
+}
+
+.voters-list {
+  margin-top: 15px;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #dee2e6;
 }

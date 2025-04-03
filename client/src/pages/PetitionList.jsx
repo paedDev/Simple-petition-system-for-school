@@ -128,7 +128,8 @@ const PetitionList = () => {
   const handleEditSubmit = async (petitionId) => {
     try {
       const token = localStorage.getItem("token");
-      const { title: newTitle, description: newDescription } = editMap[petitionId];
+      const { title: newTitle, description: newDescription } =
+        editMap[petitionId];
       await axios.put(
         `http://localhost:5000/api/petitions/${petitionId}`,
         { title: newTitle, description: newDescription },
@@ -153,28 +154,194 @@ const PetitionList = () => {
   };
 
   // Toggle between list and grid views
-  const toggleViewMode = () => {
-    setViewMode((prevMode) => (prevMode === "list" ? "grid" : "list"));
-  };
+  const handlePrintVoters = (voters) => {
+    const printWindow = window.open("", "_blank");
+    const printContent = `
+    <html>
+      <head>
+        <title>Voters List</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 20px; }
+          h1 { color: #333; }
+          ul { list-style: none; padding: 0; }
+          li { padding: 5px 0; border-bottom: 1px solid #eee; }
+        </style>
+      </head>
+      <body>
+        <h1>Voters List</h1>
+        <ul>
+          ${voters.map((voter) => `<li>ID: ${voter.idNumber}</li>`).join("")}
+        </ul>
+        <script>
+          window.onload = function() { window.print(); window.close(); }
+        </script>
+      </body>
+    </html>
+  `;
 
-  // Filter petitions by title based on the search query (case-insensitive)
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+  };
   const filteredPetitions = petitions.filter((petition) =>
     petition.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const openPetitions = filteredPetitions.filter(
+    (petition) => petition.status === "open"
+  );
+  const processedPetitions = filteredPetitions.filter(
+    (petition) => petition.status !== "open"
+  );
+
+  const renderPetitionCard = (petition) => (
+    <div key={petition._id} className={`petition-card ${viewMode}`}>
+      {editMap[petition._id] && editMap[petition._id].isEditing ? (
+        <>
+          <input
+            type="text"
+            value={editMap[petition._id].title}
+            onChange={(e) =>
+              handleEditChange(petition._id, "title", e.target.value)
+            }
+            className="input"
+          />
+          <textarea
+            value={editMap[petition._id].description}
+            onChange={(e) =>
+              handleEditChange(petition._id, "description", e.target.value)
+            }
+            className="input"
+          />
+          <div className="petition-actions">
+            <button
+              className="button btn-approve"
+              onClick={() => handleEditSubmit(petition._id)}
+            >
+              Save
+            </button>
+            <button
+              className="button"
+              onClick={() => handleToggleEdit(petition)}
+            >
+              Cancel
+            </button>
+          </div>
+        </>
+      ) : (
+        <>
+          <h2 className="petition-title">{petition.title}</h2>
+          <p className="petition-description">{petition.description}</p>
+          <p className="petition-meta">
+            Status:{" "}
+            <span className={`status-badge status-${petition.status}`}>
+              {petition.status}
+            </span>
+          </p>
+          <p className="petition-meta">
+            Petitioner: {petition.votes?.length || 0}
+          </p>
+
+          <p className="petition-meta">
+            Created: {new Date(petition.createdAt).toLocaleString()}
+          </p>
+          {role === "student" &&
+            petition.status !== "open" &&
+            petition.teacherReview && (
+              <p className="petition-meta">
+                Reviewed by: {petition.teacherReview}
+              </p>
+            )}
+          {role === "student" &&
+            petition.status !== "open" &&
+            petition.adminComment && (
+              <p className="petition-meta">
+                Admin Decision: {petition.adminComment}
+              </p>
+            )}
+          {role === "teacher" && petition.teacherReview && (
+            <p className="petition-meta">
+              Reviewed by: {petition.teacherReview}
+            </p>
+          )}
+          <div className="petition-actions">
+            {/* Keep existing action buttons */}
+            {role === "student" && (
+              <div>
+                {petition.status === "closed" ? (
+                  <button
+                    disabled
+                    className="button"
+                    style={{ backgroundColor: "#ccc", color: "#fff" }}
+                  >
+                    Closed
+                  </button>
+                ) : (
+                  <button
+                    className="button btn-approve"
+                    onClick={() => handleVote(petition._id)}
+                  >
+                    Petition
+                  </button>
+                )}
+                <button
+                  className="button"
+                  onClick={() => handleToggleVoters(petition._id)}
+                >
+                  {votersMap[petition._id]
+                    ? "Hide Petitioners"
+                    : "Show Petitioners"}
+                </button>
+                <button
+                  className="button"
+                  onClick={() => handleToggleEdit(petition)}
+                >
+                  Edit
+                </button>
+              </div>
+            )}
+            {role === "teacher" && (
+              <button
+                className="button"
+                onClick={() => handleToggleVoters(petition._id)}
+              >
+                {votersMap[petition._id] ? "Hide Voters" : "Show Voters"}
+              </button>
+            )}
+          </div>
+        </>
+      )}
+      {votersMap[petition._id] && (
+        <div className="voters-list">
+          <div className="voters-header">
+            <h3>Voters:</h3>
+            <button
+              className="button btn-print"
+              onClick={() => handlePrintVoters(votersMap[petition._id])}
+            >
+              Print Voters
+            </button>
+          </div>
+          <ul>
+            {votersMap[petition._id].map((voter) => (
+              <li key={voter._id}>ID: {voter.idNumber}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+
   return (
-    <div className={`container ${viewMode === "grid" ? "grid-view" : "list-view"}`}>
+    <div className="container">
       <div className="header">
         <h1 className="title">Petitions</h1>
         <div>
-
           <button className="button btn-logout" onClick={handleLogout}>
             Logout
           </button>
         </div>
       </div>
 
-      {/* Only for students: display form to create petition */}
       {role === "student" && (
         <form
           onSubmit={handleSubmit}
@@ -202,152 +369,35 @@ const PetitionList = () => {
         </form>
       )}
 
-      <div style={{ margin: "20px 0", textAlign: "center", display: "flex", justifyContent: "space-around", width: "80%", margin: "auto", marginBottom: "5px" }}>
-        <div>
-          <p>Search the subject </p>
-        </div>
+      <div className="controls">
         <input
           type="text"
-          placeholder="Ex. CPENET"
+          placeholder="Search petitions..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="input"
-          style={{ width: "60%", marginRight: "10px" }}
+          className="search-input"
         />
-        <div>
-          <button className="button-grid" style={{}} onClick={toggleViewMode}>
-            {viewMode === "list" ? "Grid View" : "List View"}
-          </button>
-        </div>
       </div>
 
+      <div className="split-view">
+        <div className="column open-petitions">
+          <h2>Open Petitions ({openPetitions.length})</h2>
+          {openPetitions.length === 0 ? (
+            <p className="empty-state">No open petitions found</p>
+          ) : (
+            openPetitions.map(renderPetitionCard)
+          )}
+        </div>
 
-      {filteredPetitions.length === 0 ? (
-        <p>No petitions found matching your search.</p>
-      ) : (
-        filteredPetitions.map((petition) => (
-          <div key={petition._id} className="petition-card">
-            {editMap[petition._id] && editMap[petition._id].isEditing ? (
-              <>
-                <input
-                  type="text"
-                  value={editMap[petition._id].title}
-                  onChange={(e) =>
-                    handleEditChange(petition._id, "title", e.target.value)
-                  }
-                  className="input"
-                />
-                <textarea
-                  value={editMap[petition._id].description}
-                  onChange={(e) =>
-                    handleEditChange(petition._id, "description", e.target.value)
-                  }
-                  className="input"
-                />
-                <div className="petition-actions">
-                  <button
-                    className="button btn-approve"
-                    onClick={() => handleEditSubmit(petition._id)}
-                  >
-                    Save
-                  </button>
-                  <button
-                    className="button"
-                    onClick={() => handleToggleEdit(petition)}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </>
-            ) : (
-              <>
-                <h2 className="petition-title">{petition.title}</h2>
-                <p className="petition-description">{petition.description}</p>
-                <p className="petition-meta">Status: {petition.status}</p>
-                <p className="petition-meta">
-                  Votes: {petition.votes?.length || 0}
-                </p>
-                <p className="petition-meta">
-                  By: {petition.createdBy?.username || "Unknown"}
-                </p>
-                <p className="petition-meta">
-                  Created: {new Date(petition.createdAt).toLocaleString()}
-                </p>
-                {/* For student view, show teacher review if petition is not open */}
-                {role === "student" && petition.status !== "open" && petition.teacherReview && (
-                  <p className="petition-meta">
-                    Reviewed by: {petition.teacherReview}
-                  </p>
-                )}
-                {role === "student" && petition.status !== "open" && petition.adminComment && (
-                  <p className="petition-meta">
-                    Admin Decision: {petition.adminComment}
-                  </p>
-                )}
-                {role === "teacher" && petition.teacherReview && (
-                  <p className="petition-meta">
-                    Reviewed by: {petition.teacherReview}
-                  </p>
-                )}
-                <div className="petition-actions">
-                  {role === "student" && (
-                    <div>
-                      {petition.status === "closed" ? (
-                        <button
-                          disabled
-                          className="button"
-                          style={{ backgroundColor: "#ccc", color: "#fff" }}
-                        >
-                          Closed
-                        </button>
-                      ) : (
-                        <button
-                          className="button btn-approve"
-                          onClick={() => handleVote(petition._id)}
-                        >
-                          Vote
-                        </button>
-                      )}
-                      <button
-                        className="button"
-                        onClick={() => handleToggleVoters(petition._id)}
-                      >
-                        {votersMap[petition._id] ? "Hide Voters" : "Show Voters"}
-                      </button>
-                      <button
-                        className="button"
-                        onClick={() => handleToggleEdit(petition)}
-                      >
-                        Edit
-                      </button>
-                    </div>
-                  )}
-                  {role === "teacher" && (
-                    <button
-                      className="button"
-                      onClick={() => handleToggleVoters(petition._id)}
-                    >
-                      {votersMap[petition._id] ? "Hide Voters" : "Show Voters"}
-                    </button>
-                  )}
-                </div>
-              </>
-            )}
-            {votersMap[petition._id] && (
-              <div className="voters-list">
-                <h3>Voters:</h3>
-                <ul>
-                  {votersMap[petition._id].map((voter) => (
-                    <li key={voter._id}>
-                      ID: {voter.idNumber} - Email: {voter.email}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-        ))
-      )}
+        <div className="column processed-petitions">
+          <h2>Processed Petitions ({processedPetitions.length})</h2>
+          {processedPetitions.length === 0 ? (
+            <p className="empty-state">No processed petitions found</p>
+          ) : (
+            processedPetitions.map(renderPetitionCard)
+          )}
+        </div>
+      </div>
     </div>
   );
 };

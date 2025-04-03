@@ -85,6 +85,15 @@ const Signup = () => {
             Student Login
           </Link>
         </p>
+        <p style={{ textAlign: "center", marginTop: "15px" }}>
+          Already have an account?{" "}
+          <Link
+            to="/admin/login"
+            style={{ color: "#0275d8", textDecoration: "underline" }}
+          >
+            Admin Login
+          </Link>
+        </p>
       </form>
     </div>
   );

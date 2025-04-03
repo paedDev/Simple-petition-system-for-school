@@ -5,7 +5,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { toast } from "react-hot-toast";
 
 const Login = () => {
-  const [email, setEmail] = useState("");
+  const [idNumber, setIdNumber] = useState(""); // Changed from email to idNumber
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
@@ -14,7 +14,7 @@ const Login = () => {
     e.preventDefault();
     try {
       const res = await axios.post("http://localhost:5000/api/auth/login", {
-        email,
+        idNumber, // Using idNumber for login
         password,
       });
       // Check that the user has a student role only
@@ -41,11 +41,12 @@ const Login = () => {
         <h2 style={{ textAlign: "center", marginBottom: "20px" }}>
           Student Login
         </h2>
+
         <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          type="text"
+          placeholder="Student ID" // Changed placeholder to ID Number
+          value={idNumber}
+          onChange={(e) => setIdNumber(e.target.value)} // Handling idNumber change
           className="input"
           required
         />
@@ -88,15 +89,6 @@ const Login = () => {
             style={{ color: "#0275d8", textDecoration: "underline" }}
           >
             Admin Login
-          </Link>
-        </p>
-        <p style={{ textAlign: "center", marginTop: "10px" }}>
-          Are you a teacher?{" "}
-          <Link
-            to="/teacher/login"
-            style={{ color: "#0275d8", textDecoration: "underline" }}
-          >
-            Teacher Login
           </Link>
         </p>
       </form>
