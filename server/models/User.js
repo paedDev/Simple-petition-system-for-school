@@ -12,7 +12,7 @@ const UserSchema = new mongoose.Schema({
   },
   course: {
     type: String,
-    enum: ["BSCpE & BSMexE", "COA", "CITCS"],
+    enum: ["BSCpE & BSMexE", "COA", "CITCS", "BSN"],
     required: true,
   },
 });

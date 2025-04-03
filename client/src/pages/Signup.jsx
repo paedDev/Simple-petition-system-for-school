@@ -1,4 +1,3 @@
-// src/pages/Signup.jsx
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
@@ -8,6 +7,7 @@ const Signup = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [idNumber, setIdNumber] = useState("");
+  const [course, setCourse] = useState(""); // Added course field
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
@@ -19,6 +19,7 @@ const Signup = () => {
         username,
         password,
         idNumber,
+        course,
         role: "student",
       });
       navigate("/login");
@@ -73,6 +74,17 @@ const Signup = () => {
           className="input"
           required
         />
+        <select
+          value={course}
+          onChange={(e) => setCourse(e.target.value)}
+          required
+        >
+          <option value="">Select Course</option>
+          <option value="BSCpE & BSMexE">BSCpE & BSMexE</option>
+          <option value="COA">COA</option>
+          <option value="CITCS">CITCS</option>
+          <option value="BSN">BSN</option>
+        </select>
         <button type="submit" className="form-button">
           Signup
         </button>
