@@ -88,15 +88,6 @@ const Login = () => {
             Admin Login
           </Link>
         </p>
-        <p style={{ textAlign: "center", marginTop: "10px" }}>
-          Are you a teacher?{" "}
-          <Link
-            to="/teacher/login"
-            style={{ color: "#0275d8", textDecoration: "underline" }}
-          >
-            Teacher Login
-          </Link>
-        </p>
       </form>
     </div>
   );
