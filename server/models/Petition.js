@@ -1,4 +1,5 @@
-const mongoose = require("mongoose");
+// models/Petition.js
+import mongoose from "mongoose";
 
 const PetitionSchema = new mongoose.Schema(
   {
@@ -22,4 +23,4 @@ const PetitionSchema = new mongoose.Schema(
   { timestamps: true } // Automatically adds createdAt and updatedAt fields
 );
 
-module.exports = mongoose.model("Petition", PetitionSchema);
+export default mongoose.model("Petition", PetitionSchema);

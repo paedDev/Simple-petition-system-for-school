@@ -1,7 +1,9 @@
-const express = require("express");
+// routes/petition.js
+import express from "express";
+import Petition from "../models/Petition.js";
+import auth from "../middleware/auth.js";
+
 const router = express.Router();
-const Petition = require("../models/Petition");
-const auth = require("../middleware/auth");
 
 // Create a petition (students only)
 router.post("/", auth, async (req, res) => {
@@ -152,4 +154,4 @@ router.get("/:id/voters", auth, async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

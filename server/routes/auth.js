@@ -1,7 +1,9 @@
-const express = require("express");
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
-const User = require("../models/User");
+// routes/auth.js
+import express from "express";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import User from "../models/User.js";
+
 const router = express.Router();
 
 // Student (or general) Signup route
@@ -15,7 +17,7 @@ router.post("/signup", async (req, res) => {
       username,
       password: hashedPassword,
       idNumber,
-      role, // Accepts only "student" or "admin" now
+      role,
     });
     await newUser.save();
     res.json({ message: "User created" });
@@ -53,4 +55,4 @@ router.post("/login", async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;
