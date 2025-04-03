@@ -12,13 +12,14 @@ import BSNAdminDashboard from "./pages/BSNAdminDashboard";
 // if you have one
 import "./index.css";
 import CitcsAdminDashboard from "./pages/CitcsAdminDashboard";
+import Home from "./pages/Home";
 function App() {
   return (
     <>
       <Toaster position="top-center" />
       <Router>
         <Routes>
-          <Route path="/" element={<PetitionList />} />
+          <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/admin/login" element={<AdminLogin />} />

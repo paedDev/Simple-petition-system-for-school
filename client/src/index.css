@@ -409,3 +409,56 @@ p a:hover {
   border-radius: 6px;
   border: 1px solid #dee2e6;
 }
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  font-size: 16px;
+  padding: 16px;
+  align-items: center;
+}
+.nav {
+  width: 90%;
+  height: 100px;
+  padding: 10px;
+  margin-top: 20px;
+  margin: auto;
+  box-shadow: 2px 2px 10px black;
+  backdrop-filter: blur(25px);
+}
+.btn-login {
+  font-size: 8px;
+  background-color: rgb(255, 255, 255);
+  color: white;
+  padding: 5px 30px;
+  border-radius: 10px;
+  box-shadow: 1px 1px 5px black;
+}
+.btn-login h1 {
+  color: black;
+  text-decoration: none;
+  list-style-type: none;
+}
+.nav-title {
+  color: rgb(45, 141, 45);
+}
+
+.left {
+  height: 800px;
+  display: flex;
+  align-items: center;
+}
+.home {
+  background-image: url("./assets/BackgroundFinal.jpg");
+  width: 80%;
+  margin: auto;
+
+  background-position: center;
+  background-repeat: none;
+  background-size: cover;
+  height: 100vh;
+}
+.left h1 {
+  font-size: 3rem;
+  font-style: italic;
+}
