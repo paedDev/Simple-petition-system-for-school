@@ -186,13 +186,11 @@ const CitcsAdminDashboard = () => {
 
       <div
         style={{
-          margin: "20px 0",
           textAlign: "center",
           display: "flex",
           justifyContent: "space-around",
           width: "80%",
-          margin: "auto",
-          marginBottom: "5px",
+          margin: "20px auto auto auto",
         }}
       >
         <div>
