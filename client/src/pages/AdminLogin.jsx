@@ -4,7 +4,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { toast } from "react-hot-toast";
 
 const AdminLogin = () => {
-  const [idNumber, setIdNumber] = useState(""); // Use idNumber instead of email
+  const [idNumber, setIdNumber] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
@@ -13,15 +13,28 @@ const AdminLogin = () => {
     e.preventDefault();
     try {
       const res = await axios.post("http://localhost:5000/api/auth/login", {
-        idNumber, // Send idNumber instead of email
+        idNumber,
         password,
       });
-      // Check that the user has admin role
       if (res.data.role === "admin") {
         localStorage.setItem("token", res.data.token);
         localStorage.setItem("role", res.data.role);
-        localStorage.setItem("userId", res.data.userId);
-        navigate("/admin");
+        localStorage.setItem("course", res.data.course); // Save admin's course
+
+        // Redirect based on the admin's course
+        const course = res.data.course;
+        if (course === "CITCS") {
+          navigate("/admin/citcs");
+        } else if (course === "BSN") {
+          navigate("/admin/bsn");
+        } else if (course === "COA") {
+          navigate("/admin/coa");
+        } else if (course === "BSCpE & BSMexE") {
+          navigate("/admin/bscpe");
+        } else {
+          // Fallback in case course doesn't match any route
+          navigate("/admin");
+        }
       } else {
         toast.error("Not authorized as admin");
       }
@@ -38,10 +51,10 @@ const AdminLogin = () => {
           Admin Login
         </h2>
         <input
-          type="text" // Use text for idNumber input
+          type="text"
           placeholder="ID Number"
-          value={idNumber} // Bind idNumber state here
-          onChange={(e) => setIdNumber(e.target.value)} // Update idNumber on change
+          value={idNumber}
+          onChange={(e) => setIdNumber(e.target.value)}
           className="input"
           required
         />

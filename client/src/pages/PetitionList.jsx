@@ -8,15 +8,20 @@ const PetitionList = () => {
   const [petitions, setPetitions] = useState([]);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [course, setCourse] = useState(""); // For petition creation
   // For search functionality
   const [searchQuery, setSearchQuery] = useState("");
+  // For filtering by course
+  const [filterCourse, setFilterCourse] = useState("");
   // Map petition ID to its voters list; null means hidden
   const [votersMap, setVotersMap] = useState({});
   // Map to handle edit state per petition: { [petitionId]: { isEditing, title, description } }
   const [editMap, setEditMap] = useState({});
   // View mode: "list" or "grid"
   const [viewMode, setViewMode] = useState("list");
+
   const role = localStorage.getItem("role");
+  const studentCourse = localStorage.getItem("course"); // Retrieve student's course
   const navigate = useNavigate();
 
   const fetchPetitions = async () => {
@@ -42,15 +47,24 @@ const PetitionList = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    // Enforce that a student can only create a petition for their own course
+    if (course !== studentCourse) {
+      toast.error(
+        `You can only create petitions for your own course (${studentCourse}).`
+      );
+      return;
+    }
     try {
       const token = localStorage.getItem("token");
+      // Send the selected course as the "subject"
       await axios.post(
         "http://localhost:5000/api/petitions",
-        { title, description },
+        { title, description, subject: course },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setTitle("");
       setDescription("");
+      setCourse("");
       toast.success("Petition created successfully");
       fetchPetitions();
     } catch (err) {
@@ -70,7 +84,7 @@ const PetitionList = () => {
       if (res.data.reached40) {
         toast("Petition reached 40 votes!");
       } else {
-        toast.success("Vote recorded!");
+        toast.success("Petition recorded!");
       }
       fetchPetitions();
     } catch (err) {
@@ -95,6 +109,35 @@ const PetitionList = () => {
         toast.error("Error fetching voters");
       }
     }
+  };
+
+  // Function to print voters list in a new window
+  const handlePrintVoters = (voters) => {
+    const printWindow = window.open("", "_blank");
+    const printContent = `
+      <html>
+        <head>
+          <title>Voters List</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; }
+            h1 { color: #333; }
+            ul { list-style: none; padding: 0; }
+            li { padding: 5px 0; border-bottom: 1px solid #eee; }
+          </style>
+        </head>
+        <body>
+          <h1>Voters List</h1>
+          <ul>
+            ${voters.map((voter) => `<li>ID: ${voter.idNumber}</li>`).join("")}
+          </ul>
+          <script>
+            window.onload = function() { window.print(); window.close(); }
+          </script>
+        </body>
+      </html>
+    `;
+    printWindow.document.write(printContent);
+    printWindow.document.close();
   };
 
   // Functions for editing a petition (only for students)
@@ -154,37 +197,19 @@ const PetitionList = () => {
   };
 
   // Toggle between list and grid views
-  const handlePrintVoters = (voters) => {
-    const printWindow = window.open("", "_blank");
-    const printContent = `
-    <html>
-      <head>
-        <title>Voters List</title>
-        <style>
-          body { font-family: Arial, sans-serif; padding: 20px; }
-          h1 { color: #333; }
-          ul { list-style: none; padding: 0; }
-          li { padding: 5px 0; border-bottom: 1px solid #eee; }
-        </style>
-      </head>
-      <body>
-        <h1>Voters List</h1>
-        <ul>
-          ${voters.map((voter) => `<li>ID: ${voter.idNumber}</li>`).join("")}
-        </ul>
-        <script>
-          window.onload = function() { window.print(); window.close(); }
-        </script>
-      </body>
-    </html>
-  `;
-
-    printWindow.document.write(printContent);
-    printWindow.document.close();
+  const toggleViewMode = () => {
+    setViewMode((prevMode) => (prevMode === "list" ? "grid" : "list"));
   };
-  const filteredPetitions = petitions.filter((petition) =>
-    petition.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+
+  // Apply both search and course filtering
+  const filteredPetitions = petitions
+    .filter((petition) =>
+      petition.title.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    .filter((petition) => {
+      if (!filterCourse) return true;
+      return petition.subject === filterCourse;
+    });
 
   const openPetitions = filteredPetitions.filter(
     (petition) => petition.status === "open"
@@ -244,6 +269,9 @@ const PetitionList = () => {
           <p className="petition-meta">
             Created: {new Date(petition.createdAt).toLocaleString()}
           </p>
+          <p className="petition-meta">
+            Course: {petition.course || petition.subject}
+          </p>
           {role === "student" &&
             petition.status !== "open" &&
             petition.teacherReview && (
@@ -264,7 +292,6 @@ const PetitionList = () => {
             </p>
           )}
           <div className="petition-actions">
-            {/* Keep existing action buttons */}
             {role === "student" && (
               <div>
                 {petition.status === "closed" ? (
@@ -275,12 +302,20 @@ const PetitionList = () => {
                   >
                     Closed
                   </button>
+                ) : studentCourse !== petition.subject ? (
+                  <button
+                    className="button"
+                    disabled
+                    style={{ backgroundColor: "#ccc", color: "#fff" }}
+                  >
+                    Cannot Vote (Different Course)
+                  </button>
                 ) : (
                   <button
                     className="button btn-approve"
                     onClick={() => handleVote(petition._id)}
                   >
-                    Petition
+                    Vote
                   </button>
                 )}
                 <button
@@ -342,7 +377,10 @@ const PetitionList = () => {
         </div>
       </div>
 
-      {role === "student" && (
+      {/* Petition creation form: available to all students. 
+          However, the petition can only be created if the selected course matches the student's own course.
+      */}
+      {role === "student" ? (
         <form
           onSubmit={handleSubmit}
           className="form-container"
@@ -363,11 +401,27 @@ const PetitionList = () => {
             className="input"
             required
           />
+          <select
+            value={course}
+            onChange={(e) => setCourse(e.target.value)}
+            className="input"
+            required
+          >
+            <option value="">Select Course</option>
+            <option value="BSCpE & BSMexE">BSCpE & BSMexE</option>
+            <option value="COA">COA</option>
+            <option value="CITCS">CITCS</option>
+            <option value="BSN">BSN</option>
+          </select>
           <button type="submit" className="form-button">
             Create Petition
           </button>
         </form>
-      )}
+      ) : role === "student" ? (
+        <p style={{ textAlign: "center", color: "red" }}>
+          You can only create petitions for your own course.
+        </p>
+      ) : null}
 
       <div className="controls">
         <input
@@ -377,6 +431,19 @@ const PetitionList = () => {
           onChange={(e) => setSearchQuery(e.target.value)}
           className="search-input"
         />
+        {/* Course filter dropdown */}
+        <select
+          value={filterCourse}
+          onChange={(e) => setFilterCourse(e.target.value)}
+          className="input"
+          style={{ margin: "auto", padding: "10px" }}
+        >
+          <option value="">All Courses</option>
+          <option value="BSCpE & BSMexE">BSCpE & BSMexE</option>
+          <option value="COA">COA</option>
+          <option value="CITCS">CITCS</option>
+          <option value="BSN">BSN</option>
+        </select>
       </div>
 
       <div className="split-view">

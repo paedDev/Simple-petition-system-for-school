@@ -4,8 +4,8 @@ const PetitionSchema = new mongoose.Schema(
   {
     title: { type: String, required: true },
     description: { type: String, required: true },
-    subject: { type: String }, // Used for categorizing petitions
-    adminComment: { type: String }, // The comment provided by the admin when taking action
+    subject: { type: String }, // Used for categorizing petitions (course)
+    adminComment: { type: String },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -19,7 +19,7 @@ const PetitionSchema = new mongoose.Schema(
     votes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     notified: { type: Boolean, default: false },
   },
-  { timestamps: true } // Automatically adds createdAt and updatedAt fields
+  { timestamps: true }
 );
 
 module.exports = mongoose.model("Petition", PetitionSchema);

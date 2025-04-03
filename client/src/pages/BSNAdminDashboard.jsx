@@ -1,30 +1,25 @@
-// src/pages/AdminDashboard.jsx
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { BASE_URL } from "../config/config";
-const AdminDashboard = () => {
+
+const BSNAdminDashboard = () => {
   const [viewMode, setViewMode] = useState("list");
   const [petitions, setPetitions] = useState([]);
   const [votersMap, setVotersMap] = useState({});
-  // actionMap manages inline admin action mode for a petition
   const [actionMap, setActionMap] = useState({});
-  // reviewMap manages the teacher review mode for a petition
   const [reviewMap, setReviewMap] = useState({});
-  // For search functionality
   const [searchQuery, setSearchQuery] = useState("");
   const [isGridView, setIsGridView] = useState(false);
   const navigate = useNavigate();
-
-  // Optionally prepopulate teacher review with logged in username
   const userName = localStorage.getItem("username");
 
   useEffect(() => {
     fetchPetitions();
   }, []);
 
-  // Fetch petitions and filter for "BSCpE & BSMexE"
+  // Fetch petitions and filter for "BSN"
   const fetchPetitions = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -36,9 +31,8 @@ const AdminDashboard = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       const filtered = res.data.filter(
-        (petition) => petition.subject === "BSCpE & BSMexE"
+        (petition) => petition.subject === "BSN"
       );
-      // Sort petitions by vote count descending
       filtered.sort((a, b) => (b.votes?.length || 0) - (a.votes?.length || 0));
       setPetitions(filtered);
     } catch (err) {
@@ -46,8 +40,6 @@ const AdminDashboard = () => {
       toast.error("Error fetching petitions");
     }
   };
-
-  // --- Teacher Review Functionality ---
 
   const handleReviewChange = (petitionId, value) => {
     setReviewMap((prev) => ({
@@ -85,7 +77,6 @@ const AdminDashboard = () => {
     }
   };
 
-  // --- Admin Inline Actions ---
   const toggleActionMode = (petitionId, targetStatus) => {
     setActionMap((prev) => {
       if (prev[petitionId] && prev[petitionId].isActioning) {
@@ -185,7 +176,7 @@ const AdminDashboard = () => {
       className={`container ${viewMode === "grid" ? "grid-view" : "list-view"}`}
     >
       <div className="header">
-        <h1 className="title">BSCpE & BSMexE Admin Dashboard</h1>
+        <h1 className="title">BSN Admin Dashboard</h1>
         <div>
           <button className="button btn-logout" onClick={handleLogout}>
             Logout
@@ -225,7 +216,7 @@ const AdminDashboard = () => {
       {filteredPetitions.length === 0 ? (
         <p>No petitions found.</p>
       ) : (
-        <div className="petition-container">
+        <div className={isGridView ? "grid-container" : "list-container"}>
           {filteredPetitions.map((petition) => (
             <div key={petition._id} className="petition-card">
               <h2 className="petition-title">{petition.title}</h2>
@@ -392,4 +383,4 @@ const AdminDashboard = () => {
   );
 };
 
-export default AdminDashboard;
+export default BSNAdminDashboard;

@@ -1,3 +1,4 @@
+// src/pages/Signup.jsx
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
@@ -7,7 +8,8 @@ const Signup = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [idNumber, setIdNumber] = useState("");
-  const [course, setCourse] = useState(""); // Added course field
+  const [course, setCourse] = useState(""); // Course selection state
+  const [role, setRole] = useState("student"); // Default role set to 'student'
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
@@ -20,7 +22,7 @@ const Signup = () => {
         password,
         idNumber,
         course,
-        role: "student",
+        role,
       });
       navigate("/login");
     } catch (err) {
@@ -78,12 +80,21 @@ const Signup = () => {
           value={course}
           onChange={(e) => setCourse(e.target.value)}
           required
+          className="input"
         >
           <option value="">Select Course</option>
           <option value="BSCpE & BSMexE">BSCpE & BSMexE</option>
           <option value="COA">COA</option>
           <option value="CITCS">CITCS</option>
-          <option value="BSN">BSN</option>
+        </select>
+        <select
+          value={role}
+          onChange={(e) => setRole(e.target.value)}
+          required
+          className="input"
+        >
+          <option value="student">Student</option>
+          <option value="admin">Admin</option>
         </select>
         <button type="submit" className="form-button">
           Signup
@@ -98,7 +109,7 @@ const Signup = () => {
           </Link>
         </p>
         <p style={{ textAlign: "center", marginTop: "15px" }}>
-          Already have an account?{" "}
+          Admin Login:{" "}
           <Link
             to="/admin/login"
             style={{ color: "#0275d8", textDecoration: "underline" }}

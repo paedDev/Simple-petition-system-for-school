@@ -9,13 +9,12 @@ router.post("/signup", async (req, res) => {
   const { email, username, password, idNumber, role, course } = req.body;
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
-    // If role is not provided, the schema defaults to "student"
     const newUser = new User({
       email,
       username,
       password: hashedPassword,
       idNumber,
-      role, // Accepts only "student" or "admin" now
+      role,
       course,
     });
     await newUser.save();
@@ -25,20 +24,18 @@ router.post("/signup", async (req, res) => {
   }
 });
 
-// Login route (returns token, role, and userId)
+// Login route (returns token, role, userId, and course)
 router.post("/login", async (req, res) => {
-  const { idNumber, password } = req.body; // Use idNumber instead of email
+  const { idNumber, password } = req.body; // Using idNumber for login
   try {
-    const user = await User.findOne({ idNumber }); // Search by idNumber
+    const user = await User.findOne({ idNumber });
     if (!user) {
       return res.status(400).json({ error: "User not found" });
     }
-
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(400).json({ error: "Invalid credentials" });
     }
-
     const token = jwt.sign(
       { id: user._id, role: user.role, course: user.course },
       "your_jwt_secret",

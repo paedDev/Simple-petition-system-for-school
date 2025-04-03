@@ -5,7 +5,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { toast } from "react-hot-toast";
 
 const Login = () => {
-  const [idNumber, setIdNumber] = useState(""); // Changed from email to idNumber
+  const [idNumber, setIdNumber] = useState(""); // Using idNumber instead of email
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
@@ -14,7 +14,7 @@ const Login = () => {
     e.preventDefault();
     try {
       const res = await axios.post("http://localhost:5000/api/auth/login", {
-        idNumber, // Using idNumber for login
+        idNumber, // Send idNumber for login
         password,
       });
       // Check that the user has a student role only
@@ -27,7 +27,10 @@ const Login = () => {
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("role", res.data.role);
       localStorage.setItem("userId", res.data.userId);
-      // Navigate to student dashboard ("/") or your student home page
+      // Also store the student's course for further use (if returned by the backend)
+      if (res.data.course) {
+        localStorage.setItem("course", res.data.course);
+      }
       navigate("/");
     } catch (err) {
       console.error(err);
@@ -41,12 +44,11 @@ const Login = () => {
         <h2 style={{ textAlign: "center", marginBottom: "20px" }}>
           Student Login
         </h2>
-
         <input
           type="text"
-          placeholder="Student ID" // Changed placeholder to ID Number
+          placeholder="Student ID" // Updated placeholder
           value={idNumber}
-          onChange={(e) => setIdNumber(e.target.value)} // Handling idNumber change
+          onChange={(e) => setIdNumber(e.target.value)}
           className="input"
           required
         />
@@ -81,7 +83,6 @@ const Login = () => {
             Signup
           </Link>
         </p>
-        {/* Optional: links for admin and teacher login */}
         <p style={{ textAlign: "center", marginTop: "10px" }}>
           Are you an admin?{" "}
           <Link
