@@ -230,7 +230,8 @@ const PetitionList = () => {
           display: "flex",
           justifyContent: "space-around",
           width: "80%",
-          margin: "auto",
+
+          marginBottom: "5px",
         }}
       >
         <p>Search the subject</p>
