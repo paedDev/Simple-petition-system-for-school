@@ -6,7 +6,7 @@ import { toast } from "react-hot-toast";
 import { BASE_URL } from "../config/config";
 
 const Login = () => {
-  const [email, setEmail] = useState("");
+  const [idNumber, setIdNumber] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
@@ -15,7 +15,7 @@ const Login = () => {
     e.preventDefault();
     try {
       const res = await axios.post(`${BASE_URL}/api/auth/login`, {
-        email,
+        idNumber,
         password,
       });
       if (res.data.role !== "student") {
@@ -41,10 +41,10 @@ const Login = () => {
           Student Login
         </h2>
         <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          type="text"
+          placeholder="ID Number"
+          value={idNumber}
+          onChange={(e) => setIdNumber(e.target.value)}
           className="input"
           required
         />
