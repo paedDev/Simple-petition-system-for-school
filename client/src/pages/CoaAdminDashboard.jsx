@@ -223,7 +223,6 @@ const CoaAdminDashboard = () => {
               <p className="petition-meta">
                 Petitioner: {petition.votes?.length || 0}
               </p>
-
               <p className="petition-meta">
                 Created: {new Date(petition.createdAt).toLocaleString()}
               </p>

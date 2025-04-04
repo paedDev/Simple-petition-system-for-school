@@ -1,7 +1,7 @@
-// src/pages/Signup.jsx
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
+import { BASE_URL } from "../config/config";
 
 const Signup = () => {
   const [email, setEmail] = useState("");
@@ -16,7 +16,7 @@ const Signup = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post("http://localhost:5000/api/auth/signup", {
+      await axios.post(`${BASE_URL}/api/auth/signup`, {
         email,
         username,
         password,

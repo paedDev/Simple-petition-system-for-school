@@ -1,8 +1,8 @@
-// src/pages/Login.jsx
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from "react-hot-toast";
+import { BASE_URL } from "../config/config";
 
 const Login = () => {
   const [idNumber, setIdNumber] = useState(""); // Using idNumber instead of email
@@ -13,7 +13,7 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post("http://localhost:5000/api/auth/login", {
+      const res = await axios.post(`${BASE_URL}/api/auth/login`, {
         idNumber, // Send idNumber for login
         password,
       });
@@ -46,7 +46,7 @@ const Login = () => {
         </h2>
         <input
           type="text"
-          placeholder="Student ID" // Updated placeholder
+          placeholder="Student ID"
           value={idNumber}
           onChange={(e) => setIdNumber(e.target.value)}
           className="input"

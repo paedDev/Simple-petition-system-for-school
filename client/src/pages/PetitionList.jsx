@@ -1,8 +1,8 @@
-// src/pages/PetitionList.jsx
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
+import { BASE_URL } from "../config/config";
 
 const PetitionList = () => {
   const [petitions, setPetitions] = useState([]);
@@ -27,7 +27,7 @@ const PetitionList = () => {
   const fetchPetitions = async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await axios.get("http://localhost:5000/api/petitions", {
+      const res = await axios.get(`${BASE_URL}/api/petitions`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       // Sort petitions by votes length in descending order.
@@ -58,7 +58,7 @@ const PetitionList = () => {
       const token = localStorage.getItem("token");
       // Send the selected course as the "subject"
       await axios.post(
-        "http://localhost:5000/api/petitions",
+        `${BASE_URL}/api/petitions`,
         { title, description, subject: course },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -77,7 +77,7 @@ const PetitionList = () => {
     try {
       const token = localStorage.getItem("token");
       const res = await axios.post(
-        `http://localhost:5000/api/petitions/${id}/vote`,
+        `${BASE_URL}/api/petitions/${id}/vote`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -100,7 +100,7 @@ const PetitionList = () => {
       try {
         const token = localStorage.getItem("token");
         const res = await axios.get(
-          `http://localhost:5000/api/petitions/${petitionId}/voters`,
+          `${BASE_URL}/api/petitions/${petitionId}/voters`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setVotersMap((prev) => ({ ...prev, [petitionId]: res.data.voters }));
@@ -174,7 +174,7 @@ const PetitionList = () => {
       const { title: newTitle, description: newDescription } =
         editMap[petitionId];
       await axios.put(
-        `http://localhost:5000/api/petitions/${petitionId}`,
+        `${BASE_URL}/api/petitions/${petitionId}`,
         { title: newTitle, description: newDescription },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -265,7 +265,6 @@ const PetitionList = () => {
           <p className="petition-meta">
             Petitioner: {petition.votes?.length || 0}
           </p>
-
           <p className="petition-meta">
             Created: {new Date(petition.createdAt).toLocaleString()}
           </p>
@@ -377,9 +376,6 @@ const PetitionList = () => {
         </div>
       </div>
 
-      {/* Petition creation form: available to all students. 
-          However, the petition can only be created if the selected course matches the student's own course.
-      */}
       {role === "student" ? (
         <form
           onSubmit={handleSubmit}

@@ -223,7 +223,6 @@ const CitcsAdminDashboard = () => {
               <p className="petition-meta">
                 Petitioner: {petition.votes?.length || 0}
               </p>
-
               <p className="petition-meta">
                 Created: {new Date(petition.createdAt).toLocaleString()}
               </p>
@@ -281,7 +280,7 @@ const CitcsAdminDashboard = () => {
                   className="button"
                   onClick={() => handleToggleVoters(petition._id)}
                 >
-                  {votersMap[petition._id] ? "Hide Voters" : "Show Voters"}
+                  {votersMap[petition._id] ? "Hide Voters" : "Show Petitioners"}
                 </button>
               </div>
 
