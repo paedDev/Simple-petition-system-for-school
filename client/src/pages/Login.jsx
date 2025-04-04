@@ -31,7 +31,7 @@ const Login = () => {
       if (res.data.course) {
         localStorage.setItem("course", res.data.course);
       }
-      navigate("/");
+      navigate("/petition");
     } catch (err) {
       console.error(err);
       toast.error(err.response?.data.error || "Error during login");
@@ -84,12 +84,12 @@ const Login = () => {
           </Link>
         </p>
         <p style={{ textAlign: "center", marginTop: "10px" }}>
-          Are you an admin?{" "}
+          Are you program chair?{" "}
           <Link
             to="/admin/login"
             style={{ color: "#0275d8", textDecoration: "underline" }}
           >
-            Admin Login
+            Program Chair Login
           </Link>
         </p>
       </form>

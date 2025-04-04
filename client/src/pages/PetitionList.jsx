@@ -193,7 +193,7 @@ const PetitionList = () => {
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("role");
-    navigate("/login");
+    navigate("/");
   };
 
   // Toggle between list and grid views

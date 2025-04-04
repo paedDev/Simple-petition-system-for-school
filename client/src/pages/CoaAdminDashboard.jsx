@@ -160,7 +160,7 @@ const CoaAdminDashboard = () => {
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("role");
-    navigate("/login");
+    navigate("/");
   };
 
   const toggleViewMode = () => {
@@ -176,7 +176,7 @@ const CoaAdminDashboard = () => {
       className={`container ${viewMode === "grid" ? "grid-view" : "list-view"}`}
     >
       <div className="header">
-        <h1 className="title">COA Admin Dashboard</h1>
+        <h1 className="title">COA Dashboard</h1>
         <div>
           <button className="button btn-logout" onClick={handleLogout}>
             Logout

@@ -8,6 +8,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminLogin from "./pages/AdminLogin";
 import CoaAdminDashboard from "./pages/CoaAdminDashboard";
 import BSNAdminDashboard from "./pages/BSNAdminDashboard";
+import About from "./pages/About";
 // import AdminDashboardByCourse from "./pages/AdminDashboardByCourse";
 // if you have one
 import "./index.css";
@@ -20,6 +21,8 @@ function App() {
       <Router>
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/petition" element={<PetitionList />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/admin/login" element={<AdminLogin />} />

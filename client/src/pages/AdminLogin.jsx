@@ -48,7 +48,7 @@ const AdminLogin = () => {
     <div className="auth-page">
       <form onSubmit={handleSubmit} className="form-container">
         <h2 style={{ textAlign: "center", marginBottom: "20px" }}>
-          Admin Login
+          Program Chair Login
         </h2>
         <input
           type="text"
@@ -78,10 +78,10 @@ const AdminLogin = () => {
           </label>
         </div>
         <button type="submit" className="form-button">
-          Login as Admin
+          Login as Program Chair
         </button>
         <p style={{ textAlign: "center", marginTop: "15px" }}>
-          Not an admin?{" "}
+          Not Program Chair ?{" "}
           <Link
             to="/login"
             style={{ color: "#0275d8", textDecoration: "underline" }}

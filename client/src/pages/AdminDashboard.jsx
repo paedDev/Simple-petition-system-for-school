@@ -169,7 +169,7 @@ const AdminDashboard = () => {
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("role");
-    navigate("/login");
+    navigate("/");
   };
 
   const toggleViewMode = () => {
@@ -185,7 +185,7 @@ const AdminDashboard = () => {
       className={`container ${viewMode === "grid" ? "grid-view" : "list-view"}`}
     >
       <div className="header">
-        <h1 className="title">BSCpE & BSMexE Admin Dashboard</h1>
+        <h1 className="title">BSCpE & BSMexE Dashboard</h1>
         <div>
           <button className="button btn-logout" onClick={handleLogout}>
             Logout

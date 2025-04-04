@@ -86,6 +86,7 @@ const Signup = () => {
           <option value="BSCpE & BSMexE">BSCpE & BSMexE</option>
           <option value="COA">COA</option>
           <option value="CITCS">CITCS</option>
+          <option value="BSN">BSN</option>
         </select>
         <select
           value={role}
@@ -94,7 +95,7 @@ const Signup = () => {
           className="input"
         >
           <option value="student">Student</option>
-          <option value="admin">Admin</option>
+          <option value="admin">Program Chair</option>
         </select>
         <button type="submit" className="form-button">
           Signup
@@ -109,12 +110,11 @@ const Signup = () => {
           </Link>
         </p>
         <p style={{ textAlign: "center", marginTop: "15px" }}>
-          Admin Login:{" "}
           <Link
             to="/admin/login"
             style={{ color: "#0275d8", textDecoration: "underline" }}
           >
-            Admin Login
+            Program Chair Login
           </Link>
         </p>
       </form>
