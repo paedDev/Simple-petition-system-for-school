@@ -8,18 +8,20 @@ const petitionRoutes = require("./routes/petition");
 
 const app = express();
 app.use(express.json());
-app.use(cors());
 
+app.use(
+  cors({
+    origin: ["https://jannoelpaed.vercel.app"], // Allow only your frontend URL
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
+  })
+);
 mongoose.set("strictQuery", false);
 mongoose
-  .connect(
-    process.env.MONGO_URI ||
-      "mongodb+srv://jannoelpaed17:u2qoEUJlmmApUqYh@cluster0.c1oxvj6.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0",
-    {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    }
-  )
+  .connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
   .then(() => console.log("MongoDB connected"))
   .catch((err) => console.error("MongoDB connection error:", err));
 
