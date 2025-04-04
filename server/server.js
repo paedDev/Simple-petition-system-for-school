@@ -11,9 +11,7 @@ app.use(express.json());
 
 app.use(
   cors({
-    origin: [
-      "https://jannoelpaed-git-final-jnpaeds-projects-63050fe3.vercel.app",
-    ],
+    origin: ["https://jannoelpaed.vercel.app"], // Allow only your frontend URL
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   })
