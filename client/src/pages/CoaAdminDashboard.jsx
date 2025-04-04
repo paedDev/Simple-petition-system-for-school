@@ -365,9 +365,7 @@ const CoaAdminDashboard = () => {
                   <h3>Voters:</h3>
                   <ul>
                     {votersMap[petition._id].map((voter) => (
-                      <li key={voter._id}>
-                        ID: {voter.idNumber} - Email: {voter.email}
-                      </li>
+                      <li key={voter._id}>ID: {voter.idNumber}</li>
                     ))}
                   </ul>
                 </div>

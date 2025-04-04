@@ -282,7 +282,7 @@ const PetitionList = () => {
             petition.status !== "open" &&
             petition.adminComment && (
               <p className="petition-meta">
-                Admin Decision: {petition.adminComment}
+                Program Chair Decision: {petition.adminComment}
               </p>
             )}
           {role === "teacher" && petition.teacherReview && (
