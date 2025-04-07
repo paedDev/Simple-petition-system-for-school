@@ -307,14 +307,14 @@ const PetitionList = () => {
                     disabled
                     style={{ backgroundColor: "#ccc", color: "#fff" }}
                   >
-                    Cannot Vote (Different Course)
+                    Cannot Petition (Different Course)
                   </button>
                 ) : (
                   <button
                     className="button btn-approve"
                     onClick={() => handleVote(petition._id)}
                   >
-                    Vote
+                    Petition
                   </button>
                 )}
                 <button
@@ -352,7 +352,7 @@ const PetitionList = () => {
               className="button btn-print"
               onClick={() => handlePrintVoters(votersMap[petition._id])}
             >
-              Print Voters
+              Print Petition
             </button>
           </div>
           <ul>
