@@ -347,7 +347,7 @@ const PetitionList = () => {
       {votersMap[petition._id] && (
         <div className="voters-list">
           <div className="voters-header">
-            <h3>Voters:</h3>
+            <h3>Petitioners:</h3>
             <button
               className="button btn-print"
               onClick={() => handlePrintVoters(votersMap[petition._id])}

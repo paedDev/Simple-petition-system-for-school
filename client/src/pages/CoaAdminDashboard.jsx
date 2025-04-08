@@ -280,7 +280,9 @@ const CoaAdminDashboard = () => {
                   className="button"
                   onClick={() => handleToggleVoters(petition._id)}
                 >
-                  {votersMap[petition._id] ? "Hide Voters" : "Show Voters"}
+                  {votersMap[petition._id]
+                    ? "Hide Petitioners"
+                    : "Show Petitioners"}
                 </button>
               </div>
 
