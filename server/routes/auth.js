@@ -9,13 +9,13 @@ router.post("/signup", async (req, res) => {
   const { email, username, password, idNumber, role, course } = req.body;
 
   // Regular expression to match emails ending with @students-uc-bcf.edu.ph
-  const emailRegex = /^[\w.-]+@students-uc-bcf\.edu\.ph$/;
+  const emailRegex = /^[\w.-]+@students.uc-bcf\.edu\.ph$/;
 
   // Check if the provided email matches the allowed domain
   if (!emailRegex.test(email)) {
     return res
       .status(400)
-      .json({ error: "Email must be a valid @students-uc-bcf.edu.ph address" });
+      .json({ error: "Email must be a valid @students.uc-bcf.edu.ph address" });
   }
 
   try {
