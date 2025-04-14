@@ -106,7 +106,7 @@ const PetitionList = () => {
         setVotersMap((prev) => ({ ...prev, [petitionId]: res.data.voters }));
       } catch (err) {
         console.error(err);
-        toast.error("Error fetching voters");
+        toast.error("Error fetching petition");
       }
     }
   };
@@ -117,7 +117,7 @@ const PetitionList = () => {
     const printContent = `
       <html>
         <head>
-          <title>Voters List</title>
+          <title>Petition List</title>
           <style>
             body { font-family: Arial, sans-serif; padding: 20px; }
             h1 { color: #333; }
@@ -126,7 +126,7 @@ const PetitionList = () => {
           </style>
         </head>
         <body>
-          <h1>Voters List</h1>
+          <h1>Petition List</h1>
           <ul>
             ${voters.map((voter) => `<li>ID: ${voter.idNumber}</li>`).join("")}
           </ul>
@@ -338,7 +338,9 @@ const PetitionList = () => {
                 className="button"
                 onClick={() => handleToggleVoters(petition._id)}
               >
-                {votersMap[petition._id] ? "Hide Voters" : "Show Voters"}
+                {votersMap[petition._id]
+                  ? "Hide Petitioners"
+                  : "Show Petitioners"}
               </button>
             )}
           </div>
