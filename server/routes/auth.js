@@ -4,9 +4,20 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const router = express.Router();
 
-// Student (or general) Signup route
+// Student (or general) Signup route with email domain restriction
 router.post("/signup", async (req, res) => {
   const { email, username, password, idNumber, role, course } = req.body;
+
+  // Regular expression to match emails ending with @students-uc-bcf.edu.ph
+  const emailRegex = /^[\w.-]+@students-uc-bcf\.edu\.ph$/;
+
+  // Check if the provided email matches the allowed domain
+  if (!emailRegex.test(email)) {
+    return res
+      .status(400)
+      .json({ error: "Email must be a valid @students-uc-bcf.edu.ph address" });
+  }
+
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = new User({
@@ -21,29 +32,6 @@ router.post("/signup", async (req, res) => {
     res.json({ message: "User created" });
   } catch (err) {
     res.status(400).json({ error: err.message });
-  }
-});
-
-// Login route (returns token, role, userId, and course)
-router.post("/login", async (req, res) => {
-  const { idNumber, password } = req.body; // Using idNumber for login
-  try {
-    const user = await User.findOne({ idNumber });
-    if (!user) {
-      return res.status(400).json({ error: "User not found" });
-    }
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(400).json({ error: "Invalid credentials" });
-    }
-    const token = jwt.sign(
-      { id: user._id, role: user.role, course: user.course },
-      "your_jwt_secret",
-      { expiresIn: "1d" }
-    );
-    res.json({ token, role: user.role, userId: user._id, course: user.course });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
   }
 });
 
