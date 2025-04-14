@@ -4,7 +4,7 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const router = express.Router();
 
-// Student (or general) Signup route with email domain restriction
+// Student (or general) Signup route
 router.post("/signup", async (req, res) => {
   const { email, username, password, idNumber, role, course } = req.body;
 
@@ -35,4 +35,33 @@ router.post("/signup", async (req, res) => {
   }
 });
 
+// Login route (returns token, role, userId, and course)
+router.post("/login", async (req, res) => {
+  const { idNumber, password } = req.body; // Using idNumber for login
+  try {
+    const user = await User.findOne({ idNumber });
+    if (!user) {
+      return res.status(400).json({ error: "User not found" });
+    }
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ error: "Invalid credentials" });
+    }
+    const token = jwt.sign(
+      { id: user._id, role: user.role, course: user.course },
+      "your_jwt_secret",
+      { expiresIn: "1d" }
+    );
+    // Return email along with the response
+    res.json({
+      token,
+      role: user.role,
+      userId: user._id,
+      course: user.course,
+      email: user.email,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 module.exports = router;
